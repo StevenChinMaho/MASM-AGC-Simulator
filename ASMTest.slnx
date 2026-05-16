@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="ASMTest/ASMTest.vcxproj" Id="0f2a992e-3e8b-4de9-b8a5-0f35b83a7b15" />
+</Solution>

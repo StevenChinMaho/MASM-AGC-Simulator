@@ -1,6 +1,23 @@
 IFNDEF DSKY_INC
 DSKY_INC EQU 1
 
+IFNDEF TRUE
+    TRUE  EQU 1
+ENDIF
+
+IFNDEF FALSE
+    FALSE EQU 0
+ENDIF
+
+IFNDEF EMPTY
+    EMPTY EQU 7FFFFFFFh
+ENDIF
+
+lightOff EQU ((gray * 16) + black)
+whiteLight EQU ((white * 16) + black)
+yellowLight EQU ((yellow * 16) + black)
+greenText EQU ((black * 16) + lightGreen)
+
 RenderDSKY PROTO
 
 DskyStateRecord RECORD \
@@ -23,7 +40,7 @@ EXTERNDEF g_DskyState:DskyStateRecord
 
 EXTERNDEF g_D_PROG:DWORD
 EXTERNDEF g_D_VERB:DWORD
-EXTERNDEF g_D_NOUM:DWORD
+EXTERNDEF g_D_NOUN:DWORD
 EXTERNDEF g_D_R1:DWORD
 EXTERNDEF g_D_R2:DWORD
 EXTERNDEF g_D_R3:DWORD

@@ -3,9 +3,11 @@ INCLUDE Irvine32.inc
 .model flat,stdcall
 ExitProcess PROTO, dwExitCode:DWORD
 
-INCLUDE DSKY.inc
-
+; ========= 引入終端 CodePage 設定 =========
 SetConsoleOutputCP PROTO, wCodePageID:DWORD
+; ========================================
+
+INCLUDE DSKY.inc
 
 .data
     dskyUI BYTE "┌───────────────────────────────────────────────────────┐", 0Dh, 0Ah
@@ -37,18 +39,20 @@ SetConsoleOutputCP PROTO, wCodePageID:DWORD
            BYTE "│└      ┘│  0  │ │  1  │ │  2  │ │  3  │ │ KER │└      ┘│", 0Dh, 0Ah
            BYTE "│        └     ┘ └     ┘ └     ┘ └     ┘ └     ┘        │", 0Dh, 0Ah
            BYTE "├───────────────────────────────────────────────────────┤", 0Dh, 0Ah
-           BYTE "└───────────────────────────────────────────────────────┘", 0Dh, 0Ah
-           BYTE 0
+           BYTE "└───────────────────────────────────────────────────────┘", 0
 
+    cmdMode BYTE "mode con: cols=80 lines=35", 0  ; 設定寬度80，高度35
 .code
 
 main PROC
-    INVOKE SetConsoleOutputCP, 65001
+    ; =========== 畫面初始化 ============
+    INVOKE SetConsoleOutputCP, 65001            ; 設定輸出使用 UTF-8 編碼
+
     mov edx, OFFSET dskyUI
     call WriteString
 
-    mov g_DskyState, 1111111111111b
     INVOKE RenderDSKY
+    ; =================================
 
     mov g_DskyState, 1
 

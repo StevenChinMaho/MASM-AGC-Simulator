@@ -41,7 +41,7 @@ INCLUDE DSKY.inc
            BYTE "├───────────────────────────────────────────────────────┤", 0Dh, 0Ah
            BYTE "└───────────────────────────────────────────────────────┘", 0
 
-    cmdMode BYTE "mode con: cols=80 lines=35", 0  ; 設定寬度80，高度35
+    DescriptionString BYTE "This is a simple DSKY simulation.", 0
 .code
 
 main PROC
@@ -52,29 +52,32 @@ main PROC
     call WriteString
 
     INVOKE RenderDSKY
+
+    mov dx, ((2 SHL 8) OR 60)
+    call Gotoxy
+    mov edx, OFFSET DescriptionString
+    call WriteString
     ; =================================
 
-    mov g_DskyState, 1
-    mov g_D_PROG, 11
-    mov g_D_VERB, 22
-    mov g_D_NOUN, 33
-    mov g_D_R1, 5
-    mov g_D_R2, 99995
-    mov g_D_R3, -99995
+    call ReadChar
 
-    mov ecx, 13
-_MainLoop:
-    INVOKE RenderDSKY
+    mov g_DskyState, 0
+    mov g_D_PROG, EMPTY
+    mov g_D_VERB, EMPTY
+    mov g_D_NOUN, EMPTY
+    mov g_D_R1, 0
+    mov g_D_R2, EMPTY
+    mov g_D_R3, EMPTY
 
-    shl g_DskyState, 1
-    sub g_D_R1, 1
-    inc g_D_R2
-    dec g_D_R3
-    inc g_D_PROG
+    mov ecx, 10
+    mov eax, 1
+    _MainLoop:
+        INVOKE RenderDSKY
   
-    mov eax, 1000
-    call Delay
-    loop _MainLoop
+        mov g_D_R1, ecx
+
+        ; call Delay
+        loop _MainLoop
 
     mov g_D_PROG, 88
     mov g_D_VERB, 88

@@ -1,0 +1,19 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build MASM 32-bit",
+            "type": "shell",
+            "command": "if (-not (Test-Path Debug)) { New-Item -ItemType Directory -Name Debug | Out-Null } ; foreach ($file in Get-ChildItem *.asm) { ml.exe /c /Zd /Zi /coff /I\"C:\\GitHub\\irvine\" /FoDebug\\ $file.Name } ; if ($?) { link.exe /SUBSYSTEM:CONSOLE /DEBUG /MACHINE:X86 /LIBPATH:\"C:\\GitHub\\irvine\" Debug\\*.obj Irvine32.lib kernel32.lib user32.lib /OUT:\"Debug\\${workspaceFolderBasename}.exe\" }",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

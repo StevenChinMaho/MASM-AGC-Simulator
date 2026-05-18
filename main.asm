@@ -7,7 +7,10 @@ ExitProcess PROTO, dwExitCode:DWORD
 SetConsoleOutputCP PROTO, wCodePageID:DWORD
 ; ========================================
 
+ExecAGCThread PROTO, lpParam:DWORD
+
 INCLUDE DSKY.inc
+INCLUDE main.inc
 
 .data
     dskyUI BYTE "┌───────────────────────────────────────────────────────┐", 0Dh, 0Ah
@@ -42,9 +45,18 @@ INCLUDE DSKY.inc
            BYTE "└───────────────────────────────────────────────────────┘", 0
 
     DescriptionString BYTE "This is a simple DSKY simulation.", 0
+    
+    qwDueTime   QWORD -20000000 ; 2秒 (20,000,000 * 100ns = 2s)
+    
+.data?
+    hTimer      DWORD ?
+    hExitEvent  DWORD ?
+    hThread     DWORD ?
+    WaitEvents  DWORD 2 DUP(?)
+
 .code
 
-main PROC
+pikachu:
     ; =========== 畫面初始化 ============
     INVOKE SetConsoleOutputCP, 65001            ; 設定輸出使用 UTF-8 編碼
 
@@ -58,26 +70,41 @@ main PROC
     mov edx, OFFSET DescriptionString
     call WriteString
     ; =================================
-
     call ReadChar
+    ; ========== 建立計時器與事件，並啟動模擬執行緒 ==========
+    INVOKE CreateWaitableTimer, NULL, FALSE, NULL
+    mov hTimer, eax
+    mov WaitEvents[TYPE WaitEvents * 0], eax
+    INVOKE SetWaitableTimer, hTimer, OFFSET qwDueTime, 100, NULL, NULL, FALSE
 
-    mov g_DskyState, 0
-    mov g_D_PROG, EMPTY
-    mov g_D_VERB, EMPTY
-    mov g_D_NOUN, EMPTY
+    INVOKE CreateEvent, NULL, TRUE, FALSE, NULL
+    mov hExitEvent, eax
+    mov WaitEvents[TYPE WaitEvents * 1], eax
+
+    INVOKE CreateThread, NULL, 0, OFFSET ExecAGCThread, NULL, 0, NULL
+    mov hThread, eax
+    ; =========================================================
+
     mov g_D_R1, 0
-    mov g_D_R2, EMPTY
-    mov g_D_R3, EMPTY
-
-    mov ecx, 10
-    mov eax, 1
+    mov g_D_R2, 20
+    mov g_DskyState, 0
     _MainLoop:
         INVOKE RenderDSKY
-  
-        mov g_D_R1, ecx
+        call ReadKey
+        jz ContinueLoop           ; 如果沒有按鍵輸入，繼續等待
 
-        ; call Delay
-        loop _MainLoop
+        cmp al, VK_ESCAPE
+        je ExitLoop
+
+        cmp al, VK_RETURN
+        jne ContinueLoop
+        inc g_D_R1
+
+ContinueLoop:
+        INVOKE Sleep, 100
+        jmp _MainLoop
+    
+ExitLoop:
 
     mov g_D_PROG, 88
     mov g_D_VERB, 88
@@ -90,6 +117,25 @@ main PROC
 
     INVOKE RenderDSKY
 
+    INVOKE SetEvent, hExitEvent
+    INVOKE WaitForSingleObject, hThread, INFINITE
+    INVOKE CloseHandle, hTimer
+    INVOKE CloseHandle, hExitEvent
+    INVOKE CloseHandle, hThread
+
     INVOKE ExitProcess,0
-main ENDP
-END main
+
+ExecAGCThread PROC lpParam:DWORD
+    _AGCLoop:
+        INVOKE WaitForMultipleObjects, 2, OFFSET WaitEvents, FALSE, INFINITE
+        cmp eax, 1
+        je _ExitAGCLoop
+
+        add g_D_R2, 1
+
+        jmp _AGCLoop
+    _ExitAGCLoop:
+        ret
+ExecAGCThread ENDP
+
+END pikachu

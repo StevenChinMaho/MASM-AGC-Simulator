@@ -67,8 +67,7 @@ SetOn:
 
 DrawText:
     ; 移動游標到指定座標
-    mov dl, posX
-    mov dh, posY
+    mov dx, ((posY) SHL 8) OR posX
     call Gotoxy
     
     ; 印出燈號文字
@@ -140,18 +139,37 @@ IsPositive:
 EndSigned:
 ENDIF
 
-    mov ebx, 10                 ; 準備除數
-    mov ecx, digit              ; 位數計數器
+    ; mov ebx, 10                 ; 準備除數
+    ; mov ecx, digit              ; 位數計數器
+    ; ExtractLoop:
+    ;     mov edx, 0              ; 被除數 = EDX:EAX
+    ;     div ebx                 ; eax = newNum / 10, edx = newNum % 10
+    ;     push edx                ; 暫存這一位的數字
+
+    ;     loop ExtractLoop
+
+    mov edi, 0CCCCCCCDh         ; 這是除以 10 的乘法反數 (2^35 / 10)，用來快速除以 10
+    mov ecx, digit
     ExtractLoop:
-        mov edx, 0              ; 被除數 = EDX:EAX
-        div ebx                 ; eax = newNum / 10, edx = newNum % 10
-        push edx                ; 暫存這一位的數字
+        mov esi, eax
+        
+        mul edi                 ; EDX:EAX = EAX * 0CCCCCCCDh
+        shr edx, 3              ; edx = (Quotient) esi / 10
+
+        lea ebx, [edx*4 + edx]  ; ebx = (Quotient) * 5
+        add ebx, ebx			; ebx = (Quotient) * 10 
+        sub esi, ebx            ; esi = Remainder = eax - Quotient * 10
+
+        push esi                ; 暫存這一位的數字
+
+        ; === 準備下一輪除以 10 ===
+        mov eax, edx            ; eax = Quotient
 
         loop ExtractLoop
 
+
     mov ecx, digit              ; 重新載入位數計數器
-    mov dl, posX			    ; 基準 X 座標
-    mov dh, posY
+    mov dx, ((posY) SHL 8) OR posX			    ; 基準座標 (dl = posX, dh = posY)
     DrawDigits:
         call Gotoxy
 
@@ -220,8 +238,7 @@ _RenderDone:
     call SetTextColor
 
     ; 將游標移到畫面右下角
-    mov dl, 57
-    mov dh, 29
+    mov dx, ((29) SHL 8) OR 57
     call Gotoxy
 
     popad

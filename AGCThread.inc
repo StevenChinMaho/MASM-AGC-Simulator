@@ -1,0 +1,3 @@
+AGCThread PROTO, lpParam:DWORD
+
+EXTERNDEF WaitEvents:DWORD

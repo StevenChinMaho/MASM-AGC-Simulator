@@ -1,52 +1,17 @@
 INCLUDE Irvine32.inc
-.386
-.model flat,stdcall
-ExitProcess PROTO, dwExitCode:DWORD
 
-; ========= 引入終端 CodePage 設定 =========
-SetConsoleOutputCP PROTO, wCodePageID:DWORD
-; ========================================
-
-ExecAGCThread PROTO, lpParam:DWORD
+option casemap:none
 
 INCLUDE DSKY.inc
-INCLUDE main.inc
+INCLUDE WinAPIs.inc
+INCLUDE AGCThread.inc
 
 .data
-    dskyUI BYTE "┌───────────────────────────────────────────────────────┐", 0Dh, 0Ah
-           BYTE "├───────────────────────────┬───────────────────────────┤", 0Dh, 0Ah
-           BYTE "│ UPLINK ACTY |    TEMP     │ ┌───────────────────────┐ │", 0Dh, 0Ah
-           BYTE "│             |             │ │    COMP       PROG    │ │", 0Dh, 0Ah
-           BYTE "│   NO ATT    | GIMBAL LOCK │ │    ACTY    [     ]    │ │", 0Dh, 0Ah
-           BYTE "│             |             │ │                       │ │", 0Dh, 0Ah
-           BYTE "│    STBY     |    PROG     │ │    VERB       NOUN    │ │", 0Dh, 0Ah
-           BYTE "│             |             │ │    [     ] [     ]    │ │", 0Dh, 0Ah
-           BYTE "│   KEY REL   |   RESTART   │ │  ___________________  │ │", 0Dh, 0Ah
-           BYTE "│             |             │ │                       │ │", 0Dh, 0Ah
-           BYTE "│   OPR ERR   |   TRACKER   │ │    + [           ]    │ │", 0Dh, 0Ah
-           BYTE "│             |             │ │                       │ │", 0Dh, 0Ah
-           BYTE "│             |     ALT     │ │    + [           ]    │ │", 0Dh, 0Ah
-           BYTE "│             |             │ │                       │ │", 0Dh, 0Ah
-           BYTE "│             |     VEL     │ │    + [           ]    │ │", 0Dh, 0Ah
-           BYTE "│             |             │ └───────────────────────┘ │", 0Dh, 0Ah
-           BYTE "├───────────────────────────┴───────────────────────────┤", 0Dh, 0Ah
-           BYTE "├───────────────────────────────────────────────────────┤", 0Dh, 0Ah
-           BYTE "│                                                       │", 0Dh, 0Ah
-           BYTE "│        ┌     ┐ ┌     ┐ ┌     ┐ ┌     ┐ ┌     ┐        │", 0Dh, 0Ah
-           BYTE "│┌      ┐│  +  │ │  7  │ │  8  │ │  9  │ │ CLR │┌      ┐│", 0Dh, 0Ah
-           BYTE "││ VERB │└     ┘ └     ┘ └     ┘ └     ┘ └     ┘│ ENTR ││", 0Dh, 0Ah
-           BYTE "│└      ┘┌     ┐ ┌     ┐ ┌     ┐ ┌     ┐ ┌     ┐└      ┘│", 0Dh, 0Ah
-           BYTE "│        │  -  │ │  4  │ │  5  │ │  6  │ │ PRO │        │", 0Dh, 0Ah
-           BYTE "│┌      ┐└     ┘ └     ┘ └     ┘ └     ┘ └     ┘┌      ┐│", 0Dh, 0Ah
-           BYTE "││ NOUN │┌     ┐ ┌     ┐ ┌     ┐ ┌     ┐ ┌     ┐│ RSET ││", 0Dh, 0Ah
-           BYTE "│└      ┘│  0  │ │  1  │ │  2  │ │  3  │ │ KER │└      ┘│", 0Dh, 0Ah
-           BYTE "│        └     ┘ └     ┘ └     ┘ └     ┘ └     ┘        │", 0Dh, 0Ah
-           BYTE "├───────────────────────────────────────────────────────┤", 0Dh, 0Ah
-           BYTE "└───────────────────────────────────────────────────────┘", 0
+    INCLUDE DSKY_UI.inc
 
     DescriptionString BYTE "This is a simple DSKY simulation.", 0
     
-    qwDueTime   QWORD -20000000 ; 2秒 (20,000,000 * 100ns = 2s)
+    qwDueTime   QWORD 0 * -10000000 ; 2秒 (20,000,000 * 100ns = 2s)
     
 .data?
     hTimer      DWORD ?
@@ -70,23 +35,25 @@ pikachu:
     mov edx, OFFSET DescriptionString
     call WriteString
     ; =================================
-    call ReadChar
+
+    call ReadChar       ; 等待使用者按下任意鍵後開始模擬 
+
     ; ========== 建立計時器與事件，並啟動模擬執行緒 ==========
     INVOKE CreateWaitableTimer, NULL, FALSE, NULL
     mov hTimer, eax
     mov WaitEvents[TYPE WaitEvents * 0], eax
-    INVOKE SetWaitableTimer, hTimer, OFFSET qwDueTime, 100, NULL, NULL, FALSE
+    INVOKE SetWaitableTimer, hTimer, OFFSET qwDueTime, 2000, NULL, NULL, FALSE
 
     INVOKE CreateEvent, NULL, TRUE, FALSE, NULL
     mov hExitEvent, eax
     mov WaitEvents[TYPE WaitEvents * 1], eax
 
-    INVOKE CreateThread, NULL, 0, OFFSET ExecAGCThread, NULL, 0, NULL
+    INVOKE CreateThread, NULL, 0, OFFSET AGCThread, NULL, 0, NULL
     mov hThread, eax
     ; =========================================================
 
     mov g_D_R1, 0
-    mov g_D_R2, 20
+    mov g_D_R2, 0
     mov g_DskyState, 0
     _MainLoop:
         INVOKE RenderDSKY
@@ -106,6 +73,7 @@ ContinueLoop:
     
 ExitLoop:
 
+    ; ========== 重置 DSKY 顯示的數值與狀態燈 ==========
     mov g_D_PROG, 88
     mov g_D_VERB, 88
     mov g_D_NOUN, 88
@@ -117,25 +85,13 @@ ExitLoop:
 
     INVOKE RenderDSKY
 
+    ; ========== 通知執行緒結束並等待其結束 ==========
     INVOKE SetEvent, hExitEvent
     INVOKE WaitForSingleObject, hThread, INFINITE
     INVOKE CloseHandle, hTimer
     INVOKE CloseHandle, hExitEvent
     INVOKE CloseHandle, hThread
 
-    INVOKE ExitProcess,0
-
-ExecAGCThread PROC lpParam:DWORD
-    _AGCLoop:
-        INVOKE WaitForMultipleObjects, 2, OFFSET WaitEvents, FALSE, INFINITE
-        cmp eax, 1
-        je _ExitAGCLoop
-
-        add g_D_R2, 1
-
-        jmp _AGCLoop
-    _ExitAGCLoop:
-        ret
-ExecAGCThread ENDP
+    INVOKE ExitProcess, 0
 
 END pikachu

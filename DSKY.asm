@@ -1,6 +1,5 @@
 INCLUDE Irvine32.inc
-.386
-.model flat, stdcall
+
 option casemap:none
 
 INCLUDE DSKY.inc
@@ -138,15 +137,6 @@ IsPositive:
     pop eax
 EndSigned:
 ENDIF
-
-    ; mov ebx, 10                 ; 準備除數
-    ; mov ecx, digit              ; 位數計數器
-    ; ExtractLoop:
-    ;     mov edx, 0              ; 被除數 = EDX:EAX
-    ;     div ebx                 ; eax = newNum / 10, edx = newNum % 10
-    ;     push edx                ; 暫存這一位的數字
-
-    ;     loop ExtractLoop
 
     mov edi, 0CCCCCCCDh         ; 這是除以 10 的乘法反數 (2^35 / 10)，用來快速除以 10
     mov ecx, digit

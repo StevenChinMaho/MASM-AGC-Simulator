@@ -64,5 +64,7 @@ CloseHandle PROTO, hObject:DWORD
 
 ExitThread PROTO, dwExitCode:DWORD
 
+SetConsoleOutputCP PROTO, wCodePageID:DWORD
+
 ; 定義 Windows 常數
 INFINITE EQU 0FFFFFFFFh

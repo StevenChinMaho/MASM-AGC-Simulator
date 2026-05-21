@@ -43,6 +43,7 @@
 ## 參考資料
 
 - [Moonjs](https://svtsim.com/moonjs/agc.html)
+- [Microsoft Learn](https://learn.microsoft.com/zh-tw/windows/win32/api/)
 - [Wikipedia: Apollo Guidance Computer](https://en.wikipedia.org/wiki/Apollo_Guidance_Computer)
 - [GitHub: chrislgarry/apollo-11](https://github.com/chrislgarry/apollo-11)
 - [Keyboard, Display (DSKY), Apollo Guidance Computer](https://airandspace.si.edu/collection-objects/keyboard-display-dsky-apollo-guidance-computer/nasm_A19760744000)

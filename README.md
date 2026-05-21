@@ -84,6 +84,10 @@ C:\
 
 **解決方法**: 關閉 VScode，搜尋 `x86 Native Tools Command Prompt for VS` 並執行，輸入 `code .` 來開啟 VScode。
 
+### 無法使用中斷點
+
+**解決方法**: 按下 `Ctrl`+`,` (或點擊左下齒輪並點 `Settings`)，搜尋 `allowBreakpointsEverywhere` 並打勾，即可使用中斷點。
+
 ## 參考資料
 
 - [Moonjs](https://svtsim.com/moonjs/agc.html)

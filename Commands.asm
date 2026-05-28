@@ -14,7 +14,7 @@ ExecuteCommand PROC USES eax ebx
     jne _CheckV37
     ; 設定 Lamp Test 計時器為 5000 毫秒 (背景 Thread 會接手)
     mov g_LampTestTimer, 5000
-    mov g_D_VERB, EMPTY   ; 執行完清除輸入
+    mov g_InputMode, INPUT_NONE
     jmp _Done
 
 _CheckV37:
@@ -34,7 +34,8 @@ _CheckV37Prog:
     cmp g_InputMode, INPUT_PROG
     jne _Done
     cmp g_InputBuffer, 1
-    jne _Done
+    jne _Error
+
     ; 成功進入 PROG 01
     mov g_SystemState, SYS_PROG_01
     mov g_D_PROG, 1
@@ -45,6 +46,7 @@ _CheckV37Prog:
     mov g_D_R3, EMPTY
     ; 啟動 PROG 01 轉 PROG 02 的 5 秒倒數
     mov g_Prog01Timer, 5000
+    mov g_InputMode, INPUT_NONE
     jmp _Done
 
 _CheckV82:
@@ -57,11 +59,13 @@ _CheckV82:
     
     mov g_D_VERB, 16
     mov g_D_NOUN, 44
+    mov g_InputMode, INPUT_NONE
     jmp _Done
 
 _Error:
     ; 亮起 OPR ERR 燈號
     or g_DskyState, MASK L_OPR_ERR
+    mov g_InputMode, INPUT_NONE
 
 _Done:
     ret

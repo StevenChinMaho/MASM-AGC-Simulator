@@ -61,6 +61,8 @@ _CheckSpecialKeys:
     je _HandleEnter
     cmp al, 'P'
     je _HandlePro
+    cmp al, 'R'
+    je _HandleReset
     cmp al, VK_RETURN   ; 處理圖表中的 VK_RETURN
     je _HandleReturn
     jmp _Done
@@ -80,6 +82,12 @@ _HandleNoun:
 _HandleEnter:
     ; 當按下 Enter 時，交給 Commands.asm 解析指令
     INVOKE ExecuteCommand
+    mov g_InputBuffer, 0
+    jmp _Done
+
+_HandleReset:
+    ; 處理 OPR ERR 重置
+    and g_DskyState, NOT MASK L_OPR_ERR
     mov g_InputMode, INPUT_NONE
     mov g_InputBuffer, 0
     jmp _Done

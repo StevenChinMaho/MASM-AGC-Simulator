@@ -5,19 +5,21 @@ option casemap:none
 INCLUDE DSKY.inc
 INCLUDE WinAPIs.inc
 INCLUDE AGCThread.inc
+INCLUDE Globals.inc
 
 .data
     INCLUDE DSKY_UI.inc
 
-    DescriptionString BYTE "This is a simple DSKY simulation.", 0
+    DescriptionString BYTE "AGC DSKY Simulator - Table Driven & Threading", 0
     
-    qwDueTime   QWORD 0 * -10000000 ; 2秒 (20,000,000 * 100ns = 2s)
+    g_SystemState   DWORD SYS_INIT
+    g_InputMode     DWORD INPUT_NONE
+    g_InputBuffer   DWORD 0
+    g_LampTestTimer DWORD 0
+    g_Prog01Timer   DWORD 0
     
 .data?
-    hTimer      DWORD ?
-    hExitEvent  DWORD ?
     hThread     DWORD ?
-    WaitEvents  DWORD 2 DUP(?)
 
 .code
 
@@ -39,14 +41,14 @@ pikachu:
     call ReadChar       ; 等待使用者按下任意鍵後開始模擬 
 
     ; ========== 建立計時器與事件，並啟動模擬執行緒 ==========
-    INVOKE CreateWaitableTimer, NULL, FALSE, NULL
-    mov hTimer, eax
-    mov WaitEvents[TYPE WaitEvents * 0], eax
-    INVOKE SetWaitableTimer, hTimer, OFFSET qwDueTime, 2000, NULL, NULL, FALSE
+    ; INVOKE CreateWaitableTimer, NULL, FALSE, NULL
+    ; mov hTimer, eax
+    ; mov WaitEvents[TYPE WaitEvents * 0], eax
+    ; INVOKE SetWaitableTimer, hTimer, OFFSET qwDueTime, 2000, NULL, NULL, FALSE
 
-    INVOKE CreateEvent, NULL, TRUE, FALSE, NULL
-    mov hExitEvent, eax
-    mov WaitEvents[TYPE WaitEvents * 1], eax
+    ; INVOKE CreateEvent, NULL, TRUE, FALSE, NULL
+    ; mov hExitEvent, eax
+    ; mov WaitEvents[TYPE WaitEvents * 1], eax
 
     INVOKE CreateThread, NULL, 0, OFFSET AGCThread, NULL, 0, NULL
     mov hThread, eax
@@ -69,10 +71,8 @@ pikachu:
         cmp al, VK_ESCAPE
         je ExitLoop
 
-        cmp al, VK_RETURN
-        jne ContinueLoop
-        inc g_D_R1
-
+        INVOKE ProcessKey, al
+        
 ContinueLoop:
         INVOKE Sleep, 50
         jmp _MainLoop
@@ -92,11 +92,11 @@ ExitLoop:
     INVOKE RenderDSKY
 
     ; ========== 通知執行緒結束並等待其結束 ==========
-    INVOKE SetEvent, hExitEvent
-    INVOKE WaitForSingleObject, hThread, INFINITE
-    INVOKE CloseHandle, hTimer
-    INVOKE CloseHandle, hExitEvent
-    INVOKE CloseHandle, hThread
+    ; INVOKE SetEvent, hExitEvent
+    ; INVOKE WaitForSingleObject, hThread, INFINITE
+    ; INVOKE CloseHandle, hTimer
+    ; INVOKE CloseHandle, hExitEvent
+    ; INVOKE CloseHandle, hThread
 
     INVOKE ExitProcess, 0
 

@@ -52,12 +52,15 @@ pikachu:
     mov hThread, eax
     ; =========================================================
 
-    mov g_D_PROG, 11
-    mov g_D_VERB, 16
-    mov g_D_NOUN, 44
+    mov g_D_PROG, EMPTY
+    mov g_D_VERB, EMPTY
+    mov g_D_NOUN, EMPTY
     mov g_D_R1, 0
     mov g_D_R2, 0
+    mov g_D_R3, 0
+
     mov g_DskyState, 1 SHL L_PROG
+
     _MainLoop:
         INVOKE RenderDSKY
         call ReadKey
@@ -71,7 +74,7 @@ pikachu:
         inc g_D_R1
 
 ContinueLoop:
-        INVOKE Sleep, 100
+        INVOKE Sleep, 50
         jmp _MainLoop
     
 ExitLoop:

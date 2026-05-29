@@ -19,6 +19,7 @@ _HandleVerbSubmit:
 
     cmp eax, 35             ; V35E 燈泡測試
     jne _CheckV37
+    and g_DskyState, NOT MASK L_KEY_REL
     mov g_LampTestTimer, TIMER_LAMP_TEST
     mov g_InputMode, INPUT_NONE
     INVOKE SyncActiveToDisplay  
@@ -40,6 +41,7 @@ _CheckV82:
     cmp g_ActiveProg, 11
     jne _Error
     
+    and g_DskyState, NOT MASK L_KEY_REL
     mov g_ActiveVerb, 16
     mov g_ActiveNoun, 44
     mov g_InputMode, INPUT_NONE
@@ -51,6 +53,7 @@ _HandleProgSubmit:
     cmp eax, 1              ; PROG 01
     jne _Error
 
+    and g_DskyState, NOT MASK L_KEY_REL
     mov g_ActiveProg, 1
     mov g_ActiveVerb, EMPTY
     mov g_ActiveNoun, EMPTY

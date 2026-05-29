@@ -66,12 +66,14 @@ _CheckSpecialKeys:
     jmp _Done
 
 _HandleVerb:
+    or g_DskyState, MASK L_KEY_REL
     mov g_InputMode, INPUT_VERB
     mov g_InputBuffer, 0
     mov g_D_VERB, EMPTY         ; 暫時清空畫面，準備接收數字
     jmp _Done
 
 _HandleNoun:
+    or g_DskyState, MASK L_KEY_REL
     mov g_InputMode, INPUT_NOUN
     mov g_InputBuffer, 0
     mov g_D_NOUN, EMPTY         ; 暫時清空畫面，準備接收數字
@@ -90,6 +92,7 @@ _HandleReset:
     jmp _Done
 
 _HandlePro:
+    and g_DskyState, NOT MASK L_KEY_REL
     INVOKE HandlePro            ; 【解耦】外包給狀態控制器
     jmp _Done
 

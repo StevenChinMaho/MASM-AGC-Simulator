@@ -24,6 +24,25 @@ AGCThread PROC lpParam:DWORD
     INVOKE SetWaitableTimer, hTimer, OFFSET qwDueTime, 50, NULL, NULL, FALSE
 
 _AGCLoop:
+    ; ====================================================
+    ; 0. 更新時鐘與全域閃爍節拍器
+    ; ====================================================
+    add g_UptimeMs, 50            ; 每次迴圈穩定增加 50ms
+    
+    ; 只有在 PROG 11 之後才計算 MET
+    cmp g_ActiveProg, 11
+    jl _CalcBlink
+    add g_METMs, 50
+
+_CalcBlink:
+    ; 利用 (Uptime / 500) % 2 來產生 0, 1, 0, 1 的同步閃爍訊號
+    mov eax, g_UptimeMs
+    mov ebx, 500
+    xor edx, edx
+    div ebx
+    and eax, 1
+    mov g_MasterBlink, eax
+
     ; ----------------------------------------------------
     ; 1. 處理 V35E 燈泡測試 (Lamp Test)
     ; ----------------------------------------------------
@@ -36,8 +55,8 @@ _AGCLoop:
     mov eax, g_DskyState
     mov s_SaveDskyState, eax
     
-    ; 點亮所有燈，全部數字設為 88888
-    or g_DskyState, 1111111111111b XOR MASK D_COMP_ACTY
+    ; 點亮部分所需的燈，全部數字設為 88888
+    or g_DskyState, 1111110101001b XOR MASK D_COMP_ACTY
     mov g_D_PROG, 88
     mov g_D_VERB, 88
     mov g_D_NOUN, 88
@@ -117,9 +136,8 @@ _TurnOffComp:
     and g_DskyState, NOT MASK D_COMP_ACTY
 
 _ThreadSleep:
-    ; 執行緒睡眠 50 毫秒，避免佔用 100% CPU
-    ; INVOKE Sleep, 50
-    INVOKE WaitForSingleObject, hThread, INFINITE
+    ; 執行緒等待下一個時鐘週期 (每50ms)
+    INVOKE WaitForSingleObject, hTimer, INFINITE
     jmp _AGCLoop
 
     ret

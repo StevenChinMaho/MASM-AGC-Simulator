@@ -32,6 +32,25 @@ EXTERNDEF g_ActiveR1:DWORD
 EXTERNDEF g_ActiveR2:DWORD
 EXTERNDEF g_ActiveR3:DWORD
 
+; DSKY 指示燈狀態
+DskyStateRecord RECORD \
+    RSVD:19=0,
+    L_UPLINK_ACTY:1=0,
+    L_NO_ATT:1=0,
+    L_STBY:1=0,
+    L_KEY_REL:1=0,
+    L_OPR_ERR:1=0,
+    L_TEMP:1=0,
+    L_GIMBAL_LOCK:1=0,
+    L_PROG:1=0,
+    L_RESTART:1=0,
+    L_TRACKER:1=0,
+    L_ALT:1=0,
+    L_VEL:1=0,
+    D_COMP_ACTY:1=0
+    
+EXTERNDEF g_DskyState:DskyStateRecord
+
 ; DSKY 顯示變數 (View)
 EXTERNDEF g_D_PROG:DWORD
 EXTERNDEF g_D_VERB:DWORD
@@ -39,6 +58,13 @@ EXTERNDEF g_D_NOUN:DWORD
 EXTERNDEF g_D_R1:DWORD
 EXTERNDEF g_D_R2:DWORD
 EXTERNDEF g_D_R3:DWORD
+
+; --- 時間與閃爍控制 ---
+EXTERNDEF g_UptimeMs:DWORD        ; 開機以來的總毫秒數
+EXTERNDEF g_METMs:DWORD           ; 任務經過時間 (PROG 11 開始)
+EXTERNDEF g_MasterBlink:DWORD     ; 0 或 1 (每 500ms 切換)
+
+EXTERNDEF g_DskyFlashState:DskyStateRecord  ; 閃爍遮罩 (對應 g_DskyState 的位元，1代表該燈要閃爍)
 
 ; 跨檔案的副程式宣告
 ProcessKey PROTO, key:BYTE

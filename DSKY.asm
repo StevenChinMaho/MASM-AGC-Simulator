@@ -24,7 +24,6 @@ INCLUDE Globals.inc
     szComp     BYTE "COMP", 0
     szActy     BYTE "ACTY", 0
 
-    g_DskyState DskyStateRecord <0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>
     s_DskyCurrentState DskyStateRecord <>
 
     s_D_PROG   DWORD 88
@@ -172,6 +171,18 @@ RenderDSKY PROC
     pushad
 
     mov edi, g_DskyState
+
+    ; === 閃爍魔法 (Flash Mask Logic) ===
+    cmp g_MasterBlink, 0
+    jne _SkipFlashMask          ; 如果節拍是 1 (亮)，什麼都不用做，維持原樣
+    
+    ; 如果節拍是 0 (暗)，我們要把被設定為「閃爍」的燈強制熄滅
+    mov eax, g_DskyFlashState
+    not eax                     ; 把 1 變 0 (代表這些燈這回合不能亮)
+    and edi, eax                ; 套用到目前的顯示狀態上
+_SkipFlashMask:
+    ; ===================================
+
     mov esi, s_DskyCurrentState
 
     xor esi, edi

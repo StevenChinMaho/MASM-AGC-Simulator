@@ -20,22 +20,4 @@ greenText EQU ((black * 16) + lightGreen)
 
 RenderDSKY PROTO
 
-DskyStateRecord RECORD \
-    RSVD:19=0,
-    L_UPLINK_ACTY:1=0,
-    L_NO_ATT:1=0,
-    L_STBY:1=0,
-    L_KEY_REL:1=0,
-    L_OPR_ERR:1=0,
-    L_TEMP:1=0,
-    L_GIMBAL_LOCK:1=0,
-    L_PROG:1=0,
-    L_RESTART:1=0,
-    L_TRACKER:1=0,
-    L_ALT:1=0,
-    L_VEL:1=0,
-    D_COMP_ACTY:1=0
-    
-EXTERNDEF g_DskyState:DskyStateRecord
-
 ENDIF

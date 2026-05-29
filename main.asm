@@ -74,6 +74,7 @@ ExitLoop:
     mov g_D_R2, 88888
     mov g_D_R3, 88888
 
+    mov g_DskyFlashState, 0
     or g_DskyState, 1111111111111b
 
     INVOKE RenderDSKY

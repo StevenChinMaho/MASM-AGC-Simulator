@@ -19,6 +19,9 @@ INCLUDE Globals.inc
     g_ActiveR2   DWORD 0
     g_ActiveR3   DWORD 0
 
+    ; --- DSKY 指示燈
+    g_DskyState DskyStateRecord <0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>
+
     ; --- DSKY 顯示變數 (預設初始狀態) ---
     g_D_PROG DWORD EMPTY
     g_D_VERB DWORD EMPTY
@@ -26,5 +29,10 @@ INCLUDE Globals.inc
     g_D_R1   DWORD 0
     g_D_R2   DWORD 0
     g_D_R3   DWORD 0
+    
+    g_UptimeMs       DWORD 0
+    g_METMs          DWORD 0
+    g_MasterBlink    DWORD 1
+    g_DskyFlashState DskyStateRecord <0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0>
 
 END

@@ -43,6 +43,7 @@ _CheckDigit:
 _CheckNoun:
     cmp g_InputMode, INPUT_NOUN
     jne _CheckProg
+    mov g_PendingNoun, eax
     mov g_D_NOUN, eax
     jmp _Done
 _CheckProg:

@@ -51,8 +51,6 @@ _CheckProg:
     jmp _Done
 
 _CheckSpecialKeys:
-    ; === 查表法 (Jump Table) 處理特殊指令鍵 ===
-    ; 為了簡化，這裡以字母 ASCII 進行基本分支
     cmp al, 'V'
     je _HandleVerb
     cmp al, 'N'
@@ -63,56 +61,40 @@ _CheckSpecialKeys:
     je _HandlePro
     cmp al, 'R'
     je _HandleReset
-    cmp al, VK_RETURN   ; 處理圖表中的 VK_RETURN
+    cmp al, VK_RETURN   
     je _HandleReturn
     jmp _Done
 
 _HandleVerb:
     mov g_InputMode, INPUT_VERB
     mov g_InputBuffer, 0
-    mov g_D_VERB, EMPTY
+    mov g_D_VERB, EMPTY         ; 暫時清空畫面，準備接收數字
     jmp _Done
 
 _HandleNoun:
     mov g_InputMode, INPUT_NOUN
     mov g_InputBuffer, 0
-    mov g_D_NOUN, EMPTY
+    mov g_D_NOUN, EMPTY         ; 暫時清空畫面，準備接收數字
     jmp _Done
 
 _HandleEnter:
-    ; 當按下 Enter 時，交給 Commands.asm 解析指令
-    INVOKE ExecuteCommand
+    INVOKE HandleEnter          ; 【解耦】外包給狀態控制器
     mov g_InputBuffer, 0
     jmp _Done
 
 _HandleReset:
-    ; 處理 OPR ERR 重置
     and g_DskyState, NOT MASK L_OPR_ERR
     mov g_InputMode, INPUT_NONE
     mov g_InputBuffer, 0
+    INVOKE SyncActiveToDisplay  ; 直接同步，消除畫面上打錯的數字
     jmp _Done
 
 _HandlePro:
-    ; PRO 鍵：若是 PROG 11 且目前在 V16N44，切回 V06N62
-    cmp g_SystemState, SYS_PROG_11
-    jne _Done
-    cmp g_D_VERB, 16
-    jne _Done
-    mov g_D_VERB, 6
-    mov g_D_NOUN, 62
+    INVOKE HandlePro            ; 【解耦】外包給狀態控制器
     jmp _Done
 
 _HandleReturn:
-    ; VK_RETURN 鍵：若目前是 PROG 02，跳轉至 PROG 11
-    cmp g_SystemState, SYS_PROG_02
-    jne _Done
-    mov g_SystemState, SYS_PROG_11
-    mov g_D_PROG, 11
-    mov g_D_VERB, 6
-    mov g_D_NOUN, 62
-    ; PROG 11 初始 R1/R2/R3 (It depends，此處給假資料)
-    mov g_D_R1, 12345
-    mov g_D_R2, 54321
+    INVOKE HandleReturn         ; 【解耦】外包給狀態控制器
     jmp _Done
 
 _Done:

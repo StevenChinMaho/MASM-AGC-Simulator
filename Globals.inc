@@ -3,12 +3,6 @@ GLOBALS_INC EQU 1
 
 INCLUDE DSKY.inc
 
-; --- 系統狀態常數 ---
-SYS_INIT    EQU 0
-SYS_PROG_01 EQU 1
-SYS_PROG_02 EQU 2
-SYS_PROG_11 EQU 11
-
 ; --- 輸入模式常數 ---
 INPUT_NONE  EQU 0
 INPUT_VERB  EQU 1
@@ -24,7 +18,6 @@ BLINK_P11_OFF   EQU 1500
 BLINK_P11_ON    EQU 2000  ; 1500 + 500
 
 ; --- 全域變數宣告 (統一由此管理) ---
-EXTERNDEF g_SystemState:DWORD     
 EXTERNDEF g_InputMode:DWORD       
 EXTERNDEF g_InputBuffer:DWORD     
 
@@ -51,5 +44,11 @@ EXTERNDEF g_D_R3:DWORD
 ProcessKey PROTO, key:BYTE
 ExecuteCommand PROTO
 SyncActiveToDisplay PROTO
+
+; 統一狀態轉換控制器 API
+HandleEnter PROTO
+HandlePro PROTO
+HandleReturn PROTO
+HandleTimerProg01 PROTO
 
 ENDIF

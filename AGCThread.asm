@@ -20,7 +20,7 @@ _AGCLoop:
     cmp g_LampTestTimer, 0
     je _ProcessProgTimer
     
-    ; 如果計時器剛好被設為 5000，代表剛觸發，需備份原本狀態
+    ; 如果計時器剛好被設為 5000，代表剛觸發，需備份 g_DskyState 狀態
     cmp g_LampTestTimer, TIMER_LAMP_TEST
     jne _LampTestActive
     mov eax, g_DskyState
@@ -60,22 +60,19 @@ _ProcessProgTimer:
     sub g_Prog01Timer, 50
     jg _ProcessBlinking
     
-    ; 倒數結束，且目前仍在 PROG 01，則跳轉至 PROG 02
-    cmp g_SystemState, SYS_PROG_01
-    jne _ProcessBlinking
-    mov g_SystemState, SYS_PROG_02
-    mov g_D_PROG, 2
+    ; 倒數結束，呼叫 HandleTimerProg01 跳轉至 PROG 02
+    INVOKE HandleTimerProg01
 
 _ProcessBlinking:
     ; ----------------------------------------------------
     ; 3. 處理 COMP ACTY 動畫 (閃爍邏輯)
     ; ----------------------------------------------------
     add s_BlinkCycle, 50
-
-    cmp g_SystemState, SYS_PROG_02
+        
+    cmp g_ActiveProg, 2
     je _BlinkProg02
     
-    cmp g_SystemState, SYS_PROG_11
+    cmp g_ActiveProg, 11
     je _BlinkProg11
     
     ; 其他狀態關閉 COMP ACTY 燈

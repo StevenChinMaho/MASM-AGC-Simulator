@@ -4,7 +4,6 @@ INCLUDE Globals.inc
 
 .data
     ; --- 系統與輸入狀態 ---
-    g_SystemState   DWORD SYS_INIT
     g_InputMode     DWORD INPUT_NONE
     g_InputBuffer   DWORD 0
     

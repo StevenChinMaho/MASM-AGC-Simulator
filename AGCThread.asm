@@ -13,7 +13,7 @@ INCLUDE Globals.inc
     s_SaveDskyState DWORD 0
     s_SaveFlashVerb DWORD 0
     s_SaveFlashNoun DWORD 0
-    s_LastUptimeSec DWORD 0FFFFFFFFh  ; 用來記錄上一次更新時間的秒數，防止每 50ms 瘋狂洗畫面
+    s_NextUpdateMs  DWORD 0
     qwDueTime       QWORD 0
 
 .data?
@@ -62,22 +62,27 @@ _SetDark:
 _BlinkDone:
 
     ; ====================================================
-    ; 處理 V16N65 ST 時間更新 (嚴格限制每秒一次)
+    ; 處理 V16N65 ST 時間更新 (每1秒更新，並鎖定進入時的百分秒)
     ; ====================================================
     cmp g_ActiveVerb, 16
-    jne _SkipV16N65
+    jne _ResetAndSkipV16N65
     cmp g_ActiveNoun, 65
-    jne _SkipV16N65
+    jne _ResetAndSkipV16N65
 
     mov eax, g_UptimeMs
+    cmp eax, s_NextUpdateMs
+    jb _SkipV16N65          ; 如果還沒到更新時間，就跳過不更新畫面
+
+    ; 設定下一次更新時間為 現在時間 + 1000ms
+    mov ebx, eax
+    add ebx, 1000
+    mov s_NextUpdateMs, ebx
+
+    ; --- 下面是原本的算時間邏輯 ---
     xor edx, edx
     mov ebx, 1000
     div ebx
     mov ecx, eax    ; ECX = 總秒數
-
-    cmp ecx, s_LastUptimeSec
-    je _SkipV16N65  ; 【關鍵機制】如果秒數沒換，直接跳過，保證第三行的餘數凍結不跳動！
-    mov s_LastUptimeSec, ecx
 
     ; 計算百分之一秒 (EDX / 10)
     mov eax, edx
@@ -108,7 +113,12 @@ _BlinkDone:
     
     ; 將最新時間洗上畫面
     INVOKE SyncActiveToDisplay
+    jmp _SkipV16N65
 
+_ResetAndSkipV16N65:
+    ; 【關鍵魔法】只要不在 V16N65，就一直歸零。這樣一進來就會立刻觸發第一次更新並鎖定小數點！
+    mov s_NextUpdateMs, 0   
+    
 _SkipV16N65:
 
     ; ----------------------------------------------------

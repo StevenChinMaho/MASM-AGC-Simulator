@@ -2,41 +2,66 @@ INCLUDE Irvine32.inc
 option casemap:none
 INCLUDE Globals.inc
 
+; =======================================================
+; 定義指令對應表結構 (Table-Driven 的核心)
+; =======================================================
+CommandEntry STRUCT
+    Code    DWORD ?     ; 使用者輸入的數字 (例如 35, 37, 82)
+    Handler DWORD ?     ; 負責處理該指令的區塊位址 (Label Pointer)
+CommandEntry ENDS
+
 .code
 
 ; =======================================================
 ; 1. HandleEnter: 處理使用者按下 E (Enter) 的邏輯
 ; =======================================================
-HandleEnter PROC USES eax ebx
+HandleEnter PROC USES eax ebx ecx edx esi
     cmp g_InputMode, INPUT_VERB
     je _HandleVerbSubmit
     cmp g_InputMode, INPUT_PROG
     je _HandleProgSubmit
     jmp _Done
 
+; -------------------------------------------------------
+; 表驅動的 Verb 搜尋器 (Table-Driven Dispatcher)
+; -------------------------------------------------------
 _HandleVerbSubmit:
-    mov eax, g_InputBuffer
+    mov eax, g_InputBuffer          ; EAX = 使用者打的指令數字
+    mov ecx, VerbTableLen           ; ECX = 迴圈次數 (表的大小)
+    mov esi, OFFSET VerbTable       ; ESI = 指向表的開頭
 
-    cmp eax, 35             ; V35E 燈泡測試
-    jne _CheckV37
+_SearchLoop:
+    cmp [esi].CommandEntry.Code, eax    ; 檢查字典的 Code 有沒有等於輸入的 EAX
+    je _FoundCommand                    ; 找到了就跳轉
+    add esi, SIZEOF CommandEntry        ; 沒找到，把指標往下推到下一個 Struct
+    loop _SearchLoop                    ; 繼續找
+
+    ; 如果整個迴圈跑完都沒找到，代表打錯指令
+    jmp _Error
+
+_FoundCommand:
+    ; 找到對應的指令了！取出它專屬的區塊位址並直接跳轉
+    mov edx, [esi].CommandEntry.Handler
+    jmp edx                             ; 跳轉到對應的指令邏輯
+
+; =======================================================
+; 以下是各個 Verb 的專屬處理區塊 (Action Handlers)
+; =======================================================
+_CmdV35::
     and g_DskyState, NOT MASK L_KEY_REL
     mov g_LampTestTimer, TIMER_LAMP_TEST
     mov g_InputMode, INPUT_NONE
     INVOKE SyncActiveToDisplay  
     jmp _Done
 
-_CheckV37:
-    cmp eax, 37             ; V37E 準備切換 Program
-    jne _CheckV82
+_CmdV37::
     mov g_InputMode, INPUT_PROG
     INVOKE SyncActiveToDisplay  
     mov g_D_VERB, 37            ; 特例：更新螢幕後刻意保留 VERB 37  
     mov g_D_PROG, EMPTY         ; 清空 PROG 畫面提示等待輸入
     jmp _Done
 
-_CheckV82:
-    cmp eax, 82             ; V82E 軌道參數
-    jne _Error
+_CmdV82::
     ; 直接檢查 ActiveProg
     cmp g_ActiveProg, 11
     jne _Error
@@ -50,6 +75,9 @@ _CheckV82:
     INVOKE SyncActiveToDisplay  
     jmp _Done
 
+; -------------------------------------------------------
+; 處理 PROG 的輸入
+; -------------------------------------------------------
 _HandleProgSubmit:
     mov eax, g_InputBuffer
     cmp eax, 1              ; PROG 01
@@ -68,6 +96,9 @@ _HandleProgSubmit:
     INVOKE SyncActiveToDisplay  
     jmp _Done
 
+; -------------------------------------------------------
+; 錯誤處理與結束
+; -------------------------------------------------------
 _Error:
     or g_DskyState, MASK L_OPR_ERR
     mov g_InputMode, INPUT_NONE
@@ -177,5 +208,13 @@ HandleTimerProg01 PROC
 _Done:
     ret
 HandleTimerProg01 ENDP
+
+.data
+    ; === Verb 指令字典 ===
+    ; 未來要新增任何 Verb，只要在這個陣列加一行就好！
+    VerbTable CommandEntry <35, OFFSET _CmdV35>
+              CommandEntry <37, OFFSET _CmdV37>
+              CommandEntry <82, OFFSET _CmdV82>
+    VerbTableLen DWORD 3   ; 字典裡的指令數量
 
 END

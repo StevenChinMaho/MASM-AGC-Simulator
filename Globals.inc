@@ -31,7 +31,12 @@ EXTERNDEF g_InputBuffer:DWORD
 EXTERNDEF g_LampTestTimer:DWORD   
 EXTERNDEF g_Prog01Timer:DWORD     
 
-; 【新增】從 DSKY.inc 搬過來的顯示變數宣告
+; 系統真實的狀態 (Model)
+EXTERNDEF g_ActiveProg:DWORD
+EXTERNDEF g_ActiveVerb:DWORD
+EXTERNDEF g_ActiveNoun:DWORD
+
+; DSKY 顯示變數 (View)
 EXTERNDEF g_D_PROG:DWORD
 EXTERNDEF g_D_VERB:DWORD
 EXTERNDEF g_D_NOUN:DWORD

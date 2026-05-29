@@ -66,6 +66,10 @@ EXTERNDEF g_MasterBlink:DWORD     ; 0 或 1 (每 500ms 切換)
 
 EXTERNDEF g_DskyFlashState:DskyStateRecord  ; 閃爍遮罩 (對應 g_DskyState 的位元，1代表該燈要閃爍)
 
+; 控制數字區塊閃爍的開關 (1=閃爍, 0=常亮)
+EXTERNDEF g_FlashVerb:DWORD
+EXTERNDEF g_FlashNoun:DWORD
+
 ; 跨檔案的副程式宣告
 ProcessKey PROTO, key:BYTE
 ExecuteCommand PROTO

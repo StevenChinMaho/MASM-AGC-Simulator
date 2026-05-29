@@ -222,8 +222,31 @@ _RenderNumbers:
     ; 使用巨集依序檢查並渲染每一個數字
     ; 格式: CheckAndDrawNumber <currentNum> <newNum> <posX> <posY> <digit> <isSigned>
     CheckAndDrawNumber s_D_PROG, g_D_PROG,  45, 4, 2, FALSE
-    CheckAndDrawNumber s_D_VERB, g_D_VERB,  37, 7, 2, FALSE
-    CheckAndDrawNumber s_D_NOUN, g_D_NOUN,  45, 7, 2, FALSE
+
+    ; ==========================================
+    ; 【新增】處理 VERB 閃爍
+    ; ==========================================
+    mov eax, g_D_VERB
+    cmp g_FlashVerb, 1          ; 如果沒有開啟閃爍
+    jne _DrawVerb               ; -> 正常畫
+    cmp g_MasterBlink, 0        ; 如果開啟了，但現在是亮(1)的節拍
+    jne _DrawVerb               ; -> 正常畫
+    mov eax, EMPTY              ; 否則現在是暗(0)的節拍 -> 換成空白
+_DrawVerb:
+    CheckAndDrawNumber s_D_VERB, eax,  37, 7, 2, FALSE
+
+    ; ==========================================
+    ; 【新增】處理 NOUN 閃爍
+    ; ==========================================
+    mov eax, g_D_NOUN
+    cmp g_FlashNoun, 1
+    jne _DrawNoun
+    cmp g_MasterBlink, 0
+    jne _DrawNoun
+    mov eax, EMPTY
+_DrawNoun:
+    CheckAndDrawNumber s_D_NOUN, eax,  45, 7, 2, FALSE
+
     CheckAndDrawNumber s_D_R1, g_D_R1,      39, 10, 5, TRUE
     CheckAndDrawNumber s_D_R2, g_D_R2,      39, 12, 5, TRUE
     CheckAndDrawNumber s_D_R3, g_D_R3,      39, 14, 5, TRUE

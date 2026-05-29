@@ -44,6 +44,8 @@ _CheckV82:
     and g_DskyState, NOT MASK L_KEY_REL
     mov g_ActiveVerb, 16
     mov g_ActiveNoun, 44
+    mov g_FlashNoun, 1
+    mov g_FlashVerb, 1
     mov g_InputMode, INPUT_NONE
     INVOKE SyncActiveToDisplay  
     jmp _Done
@@ -89,6 +91,8 @@ HandlePro PROC
     
     mov g_ActiveVerb, 6
     mov g_ActiveNoun, 62
+    mov g_FlashNoun, 0
+    mov g_FlashVerb, 0
     INVOKE SyncActiveToDisplay
 _Done:
     ret

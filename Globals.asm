@@ -35,4 +35,7 @@ INCLUDE Globals.inc
     g_MasterBlink    DWORD 1
     g_DskyFlashState DskyStateRecord <0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0>
 
+    g_FlashVerb      DWORD 0
+    g_FlashNoun      DWORD 0
+
 END

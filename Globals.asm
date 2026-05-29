@@ -6,6 +6,8 @@ INCLUDE Globals.inc
     ; --- 系統與輸入狀態 ---
     g_InputMode     DWORD INPUT_NONE
     g_InputBuffer   DWORD 0
+    g_PendingVerb   DWORD EMPTY
+    g_PendingNoun   DWORD EMPTY
     
     ; --- 計時器 ---
     g_LampTestTimer DWORD 0

@@ -13,6 +13,7 @@ INCLUDE Globals.inc
     s_SaveDskyState DWORD 0
     s_SaveFlashVerb DWORD 0
     s_SaveFlashNoun DWORD 0
+    s_LastUptimeSec DWORD 0FFFFFFFFh  ; 用來記錄上一次更新時間的秒數，防止每 50ms 瘋狂洗畫面
     qwDueTime       QWORD 0
 
 .data?
@@ -59,6 +60,56 @@ _SetDark:
     mov g_MasterBlink, 0
     
 _BlinkDone:
+
+    ; ====================================================
+    ; 處理 V16N65 ST 時間更新 (嚴格限制每秒一次)
+    ; ====================================================
+    cmp g_ActiveVerb, 16
+    jne _SkipV16N65
+    cmp g_ActiveNoun, 65
+    jne _SkipV16N65
+
+    mov eax, g_UptimeMs
+    xor edx, edx
+    mov ebx, 1000
+    div ebx
+    mov ecx, eax    ; ECX = 總秒數
+
+    cmp ecx, s_LastUptimeSec
+    je _SkipV16N65  ; 【關鍵機制】如果秒數沒換，直接跳過，保證第三行的餘數凍結不跳動！
+    mov s_LastUptimeSec, ecx
+
+    ; 計算百分之一秒 (EDX / 10)
+    mov eax, edx
+    xor edx, edx
+    mov ebx, 10
+    div ebx
+    mov edi, eax    ; EDI = 百分之一秒 (Hundredths)
+
+    ; 算小時放 R1
+    mov eax, ecx
+    xor edx, edx
+    mov ebx, 3600
+    div ebx
+    mov g_ActiveR1, eax
+
+    ; 算分鐘放 R2
+    mov eax, edx
+    xor edx, edx
+    mov ebx, 60
+    div ebx
+    mov g_ActiveR2, eax
+
+    ; 算秒與百分之一秒放 R3 (秒數 * 100 + 百分之一秒)
+    mov eax, edx
+    imul eax, 100
+    add eax, edi
+    mov g_ActiveR3, eax
+    
+    ; 將最新時間洗上畫面
+    INVOKE SyncActiveToDisplay
+
+_SkipV16N65:
 
     ; ----------------------------------------------------
     ; 1. 處理 V35E 燈泡測試 (Lamp Test)
@@ -146,7 +197,14 @@ _ProcessBlinking:
     ; 3. 處理 COMP ACTY 動畫 (閃爍邏輯)
     ; ----------------------------------------------------
     add s_BlinkCycle, 50
+    
+    ; 優先檢查 V16N65 的 COMP ACTY 閃爍 (覆蓋其他模式)
+    cmp g_ActiveVerb, 16
+    jne _CheckProgs
+    cmp g_ActiveNoun, 65
+    je _BlinkV16N65
         
+_CheckProgs:
     cmp g_ActiveProg, 2
     je _BlinkProg02
     
@@ -159,6 +217,16 @@ _ProcessBlinking:
     ; 其他狀態關閉 COMP ACTY 燈
     and g_DskyState, NOT MASK D_COMP_ACTY
     jmp _ThreadSleep
+
+_BlinkV16N65:
+    ; 每秒閃一次 (800ms 暗, 200ms 亮) -> 總週期 1000ms
+    cmp s_BlinkCycle, 1000
+    jl _V16N65CheckOn
+    mov s_BlinkCycle, 0
+_V16N65CheckOn:
+    cmp s_BlinkCycle, 800
+    jl _TurnOffComp
+    jmp _TurnOnComp
 
 _BlinkProg02:
     ; PROG 02: 400ms off, 100ms on (總週期 500ms)

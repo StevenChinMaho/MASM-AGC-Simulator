@@ -21,6 +21,9 @@ BLINK_P11_ON    EQU 2000  ; 1500 + 500
 EXTERNDEF g_InputMode:DWORD       
 EXTERNDEF g_InputBuffer:DWORD     
 
+EXTERNDEF g_PendingVerb:DWORD
+EXTERNDEF g_PendingNoun:DWORD
+
 EXTERNDEF g_LampTestTimer:DWORD   
 EXTERNDEF g_Prog01Timer:DWORD     
 

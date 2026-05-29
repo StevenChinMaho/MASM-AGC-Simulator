@@ -3,50 +3,67 @@ option casemap:none
 INCLUDE Globals.inc
 
 ; =======================================================
-; 定義指令對應表結構 (Table-Driven 的核心)
+; 定義指令對應表結構 (支援 Verb + Noun 組合)
 ; =======================================================
 CommandEntry STRUCT
-    Code    DWORD ?     ; 使用者輸入的數字 (例如 35, 37, 82)
-    Handler DWORD ?     ; 負責處理該指令的區塊位址 (Label Pointer)
+    Verb    DWORD ?     ; 指令 Verb
+    Noun    DWORD ?     ; 指令 Noun (若不需 Noun 則為 EMPTY)
+    Handler DWORD ?     ; 處理區塊
 CommandEntry ENDS
 
 .code
 
 ; =======================================================
-; 1. HandleEnter: 處理使用者按下 E (Enter) 的邏輯
+; 1. HandleEnter: 處理使用者按下 E 的邏輯
 ; =======================================================
 HandleEnter PROC USES eax ebx ecx edx esi
-    cmp g_InputMode, INPUT_VERB
-    je _HandleVerbSubmit
+    ; 如果是輸入 PROG 號碼，走獨立邏輯
     cmp g_InputMode, INPUT_PROG
     je _HandleProgSubmit
+
+    ; 只有在 VERB 或 NOUN 模式下按 E，才進行查表
+    cmp g_InputMode, INPUT_VERB
+    je _ProcessVerbNoun
+    cmp g_InputMode, INPUT_NOUN
+    je _ProcessVerbNoun
     jmp _Done
 
 ; -------------------------------------------------------
-; 表驅動的 Verb 搜尋器 (Table-Driven Dispatcher)
+; 組合鍵表驅動搜尋器
 ; -------------------------------------------------------
-_HandleVerbSubmit:
-    mov eax, g_InputBuffer          ; EAX = 使用者打的指令數字
-    mov ecx, VerbTableLen           ; ECX = 迴圈次數 (表的大小)
-    mov esi, OFFSET VerbTable       ; ESI = 指向表的開頭
+_ProcessVerbNoun:
+    mov eax, g_PendingVerb          ; EAX = 組合的 Verb
+    mov ebx, g_PendingNoun          ; EBX = 組合的 Noun
+    mov ecx, VerbTableLen           
+    mov esi, OFFSET VerbTable       
 
 _SearchLoop:
-    cmp [esi].CommandEntry.Code, eax    ; 檢查字典的 Code 有沒有等於輸入的 EAX
-    je _FoundCommand                    ; 找到了就跳轉
-    add esi, SIZEOF CommandEntry        ; 沒找到，把指標往下推到下一個 Struct
-    loop _SearchLoop                    ; 繼續找
+    cmp [esi].CommandEntry.Verb, eax    ; 比對 Verb
+    jne _Next
+    cmp [esi].CommandEntry.Noun, ebx    ; 比對 Noun
+    jne _Next
+    
+    ; 全命中！
+    mov edx, [esi].CommandEntry.Handler
+    jmp edx                             
 
-    ; 如果整個迴圈跑完都沒找到，代表打錯指令
+_Next:
+    add esi, SIZEOF CommandEntry        
+    loop _SearchLoop                    
+
     jmp _Error
 
-_FoundCommand:
-    ; 找到對應的指令了！取出它專屬的區塊位址並直接跳轉
-    mov edx, [esi].CommandEntry.Handler
-    jmp edx                             ; 跳轉到對應的指令邏輯
+; =======================================================
+; 各個組合指令的處理邏輯
+; =======================================================
+_CmdV16N65::
+    mov g_ActiveVerb, 16
+    mov g_ActiveNoun, 65
+    or g_DskyState, MASK L_KEY_REL
+    mov g_InputMode, INPUT_NONE
+    INVOKE SyncActiveToDisplay  
+    jmp _Done
 
-; =======================================================
-; 以下是各個 Verb 的專屬處理區塊 (Action Handlers)
-; =======================================================
 _CmdV35::
     and g_DskyState, NOT MASK L_KEY_REL
     mov g_LampTestTimer, TIMER_LAMP_TEST
@@ -57,15 +74,13 @@ _CmdV35::
 _CmdV37::
     mov g_InputMode, INPUT_PROG
     INVOKE SyncActiveToDisplay  
-    mov g_D_VERB, 37            ; 特例：更新螢幕後刻意保留 VERB 37  
-    mov g_D_PROG, EMPTY         ; 清空 PROG 畫面提示等待輸入
+    mov g_D_VERB, 37            
+    mov g_D_PROG, EMPTY         
     jmp _Done
 
 _CmdV82::
-    ; 直接檢查 ActiveProg
     cmp g_ActiveProg, 11
     jne _Error
-    
     and g_DskyState, NOT MASK L_KEY_REL
     mov g_ActiveVerb, 16
     mov g_ActiveNoun, 44
@@ -80,7 +95,7 @@ _CmdV82::
 ; -------------------------------------------------------
 _HandleProgSubmit:
     mov eax, g_InputBuffer
-    cmp eax, 1              ; PROG 01
+    cmp eax, 1              
     jne _Error
 
     and g_DskyState, NOT MASK L_KEY_REL
@@ -96,9 +111,6 @@ _HandleProgSubmit:
     INVOKE SyncActiveToDisplay  
     jmp _Done
 
-; -------------------------------------------------------
-; 錯誤處理與結束
-; -------------------------------------------------------
 _Error:
     or g_DskyState, MASK L_OPR_ERR
     mov g_InputMode, INPUT_NONE
@@ -110,18 +122,26 @@ _Done:
 HandleEnter ENDP
 
 ; =======================================================
-; HandleKeyRel: 處理按下 KEY REL (K) 鍵
-; 放棄手動輸入控制權，關閉提示燈，並將畫面強制恢復為背景狀態
+; HandleKeyRel
 ; =======================================================
 HandleKeyRel PROC
-    ; 1. 無論如何，先關閉 KEY REL 的燈號與閃爍狀態
     and g_DskyState, NOT MASK L_KEY_REL
 
-    ; 2. 檢查是否正在輸入中，如果不是，就什麼都不做
+    cmp g_ActiveVerb, 16
+    jne _CheckInput
+    cmp g_ActiveNoun, 65
+    jne _CheckInput
+
+    mov g_ActiveVerb, 6
+    mov g_ActiveNoun, 62
+    mov g_InputMode, INPUT_NONE
+    INVOKE SyncActiveToDisplay
+    jmp _Done
+
+_CheckInput:
     cmp g_InputMode, INPUT_NONE
     je _Done
     
-    ; 3. 取消正在進行的輸入，並將畫面洗回系統真實狀態 (Model)
     mov g_InputMode, INPUT_NONE
     INVOKE SyncActiveToDisplay
 _Done:
@@ -129,11 +149,9 @@ _Done:
 HandleKeyRel ENDP
 
 ; =======================================================
-; HandleClr: 處理按下 CLR (C) 鍵
-; 只清除畫面上「目前正在編輯的欄位」，讓使用者可以重新打數字
+; HandleClr
 ; =======================================================
 HandleClr PROC
-    ; 根據目前的輸入模式，清空對應的顯示欄位 (View)
     cmp g_InputMode, INPUT_VERB
     je _ClrVerb
     cmp g_InputMode, INPUT_NOUN
@@ -143,13 +161,18 @@ HandleClr PROC
     jmp _Done
 
 _ClrVerb:
+    mov g_PendingVerb, 0
+    mov g_InputBuffer, 0
     mov g_D_VERB, EMPTY
     jmp _Done
 _ClrNoun:
+    mov g_PendingNoun, 0
+    mov g_InputBuffer, 0
     mov g_D_NOUN, EMPTY
     jmp _Done
 _ClrProg:
     mov g_D_PROG, EMPTY
+    mov g_InputBuffer, 0
     jmp _Done
 
 _Done:
@@ -157,52 +180,55 @@ _Done:
 HandleClr ENDP
 
 ; =======================================================
-; 2. HandlePro: 處理按下 PRO 鍵的狀態切換
+; HandlePro
 ; =======================================================
 HandlePro PROC
-    ; 只有在 PROG 11 且 V16N44 時，PRO 鍵才有作用
-    cmp g_ActiveProg, 11
-    jne _Done
     cmp g_ActiveVerb, 16
     jne _Done
     
+    cmp g_ActiveNoun, 44
+    je _HandleV16N44
+    
+    cmp g_ActiveNoun, 65
+    je _ReturnToMain
+    
+    jmp _Done
+
+_HandleV16N44:
+    cmp g_ActiveProg, 11
+    jne _Done
+    jmp _ReturnToMain
+
+_ReturnToMain:
     mov g_ActiveVerb, 6
     mov g_ActiveNoun, 62
     mov g_FlashNoun, 0
     mov g_FlashVerb, 0
+    and g_DskyState, NOT MASK L_KEY_REL
     INVOKE SyncActiveToDisplay
 _Done:
     ret
 HandlePro ENDP
 
-
 ; =======================================================
-; 3. HandleReturn: 處理按下 VK_RETURN 的狀態切換
+; HandleReturn & HandleTimerProg01
 ; =======================================================
 HandleReturn PROC
-    ; 若目前是 PROG 02，跳轉至 PROG 11
     cmp g_ActiveProg, 2
     jne _Done
-    
     mov g_ActiveProg, 11
     mov g_ActiveVerb, 6
     mov g_ActiveNoun, 62
-    mov g_ActiveR1, 12345       ; (暫代資料)
-    mov g_ActiveR2, 54321       ; (暫代資料)
+    mov g_ActiveR1, 12345       
+    mov g_ActiveR2, 54321       
     INVOKE SyncActiveToDisplay
 _Done:
     ret
 HandleReturn ENDP
 
-
-; =======================================================
-; 4. HandleTimerProg01: 處理 PROG 01 的 5 秒計時器結束
-; =======================================================
 HandleTimerProg01 PROC
-    ; 確認目前仍在 PROG 01 才進行跳轉
     cmp g_ActiveProg, 1
     jne _Done
-    
     mov g_ActiveProg, 2
     INVOKE SyncActiveToDisplay
 _Done:
@@ -210,11 +236,11 @@ _Done:
 HandleTimerProg01 ENDP
 
 .data
-    ; === Verb 指令字典 ===
-    ; 未來要新增任何 Verb，只要在這個陣列加一行就好！
-    VerbTable CommandEntry <35, OFFSET _CmdV35>
-              CommandEntry <37, OFFSET _CmdV37>
-              CommandEntry <82, OFFSET _CmdV82>
-    VerbTableLen DWORD 3   ; 字典裡的指令數量
+    ; === 組合指令字典 (Verb, Noun, Handler) ===
+    VerbTable CommandEntry <16, 65, OFFSET _CmdV16N65>
+              CommandEntry <35, EMPTY, OFFSET _CmdV35>
+              CommandEntry <37, EMPTY, OFFSET _CmdV37>
+              CommandEntry <82, EMPTY, OFFSET _CmdV82>
+    VerbTableLen DWORD 4
 
 END

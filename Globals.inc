@@ -35,6 +35,9 @@ EXTERNDEF g_Prog01Timer:DWORD
 EXTERNDEF g_ActiveProg:DWORD
 EXTERNDEF g_ActiveVerb:DWORD
 EXTERNDEF g_ActiveNoun:DWORD
+EXTERNDEF g_ActiveR1:DWORD
+EXTERNDEF g_ActiveR2:DWORD
+EXTERNDEF g_ActiveR3:DWORD
 
 ; DSKY 顯示變數 (View)
 EXTERNDEF g_D_PROG:DWORD
@@ -47,5 +50,6 @@ EXTERNDEF g_D_R3:DWORD
 ; 跨檔案的副程式宣告
 ProcessKey PROTO, key:BYTE
 ExecuteCommand PROTO
+SyncActiveToDisplay PROTO
 
 ENDIF

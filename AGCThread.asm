@@ -11,13 +11,6 @@ INCLUDE Globals.inc
     
     ; 燈泡測試時用來暫存原本狀態的變數
     s_SaveDskyState DWORD 0
-    s_SaveR1 DWORD 0
-    s_SaveR2 DWORD 0
-    s_SaveR3 DWORD 0
-
-    s_SaveProg DWORD 0        
-    s_SaveVerb DWORD 0        
-    s_SaveNoun DWORD 0
 .code
 AGCThread PROC lpParam:DWORD
 _AGCLoop:
@@ -32,19 +25,6 @@ _AGCLoop:
     jne _LampTestActive
     mov eax, g_DskyState
     mov s_SaveDskyState, eax
-    mov eax, g_D_R1
-    mov s_SaveR1, eax
-    mov eax, g_D_R2
-    mov s_SaveR2, eax
-    mov eax, g_D_R3
-    mov s_SaveR3, eax
-
-    mov eax, g_D_PROG
-    mov s_SaveProg, eax
-    mov eax, g_D_VERB
-    mov s_SaveVerb, eax
-    mov eax, g_D_NOUN
-    mov s_SaveNoun, eax
     
     ; 點亮所有燈，全部數字設為 88888
     or g_DskyState, 1111111111111b XOR MASK D_COMP_ACTY
@@ -67,19 +47,7 @@ _LampTestActive:
     or eax, ebx                     ; 完美結合兩者
     mov g_DskyState, eax
 
-    mov eax, s_SaveR1
-    mov g_D_R1, eax
-    mov eax, s_SaveR2
-    mov g_D_R2, eax
-    mov eax, s_SaveR3
-    mov g_D_R3, eax
-
-    mov eax, s_SaveProg
-    mov g_D_PROG, eax
-    mov eax, s_SaveVerb
-    mov g_D_VERB, eax
-    mov eax, s_SaveNoun
-    mov g_D_NOUN, EAX
+    INVOKE SyncActiveToDisplay
 
     mov g_LampTestTimer, 0
 

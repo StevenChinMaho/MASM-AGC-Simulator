@@ -16,6 +16,9 @@ INCLUDE Globals.inc
     g_ActiveProg DWORD EMPTY
     g_ActiveVerb DWORD EMPTY
     g_ActiveNoun DWORD EMPTY
+    g_ActiveR1   DWORD 0
+    g_ActiveR2   DWORD 0
+    g_ActiveR3   DWORD 0
 
     ; --- DSKY 顯示變數 (預設初始狀態) ---
     g_D_PROG DWORD EMPTY

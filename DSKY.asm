@@ -230,4 +230,30 @@ _RenderDone:
     ret
 RenderDSKY ENDP
 
+; ==============================================================================
+; SyncActiveToDisplay
+; 功能: 將系統真實狀態 (Model) 強制覆寫到顯示變數 (View) 上
+; ==============================================================================
+SyncActiveToDisplay PROC USES eax
+    mov eax, g_ActiveProg
+    mov g_D_PROG, eax
+    
+    mov eax, g_ActiveVerb
+    mov g_D_VERB, eax
+    
+    mov eax, g_ActiveNoun
+    mov g_D_NOUN, eax
+    
+    mov eax, g_ActiveR1
+    mov g_D_R1, eax
+    
+    mov eax, g_ActiveR2
+    mov g_D_R2, eax
+    
+    mov eax, g_ActiveR3
+    mov g_D_R3, eax
+    
+    ret
+SyncActiveToDisplay ENDP
+
 END

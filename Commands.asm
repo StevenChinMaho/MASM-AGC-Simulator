@@ -24,21 +24,18 @@ _HandleVerbSubmit:
     cmp eax, 35
     jne _CheckV37
     mov g_LampTestTimer, TIMER_LAMP_TEST
-    ; 【關鍵修復】V35E 是一個觸發動作，不會改變系統的 Active 狀態。
-    ; 我們直接把畫面上的 VERB 恢復成系統真正的 ActiveVerb，消除 '35' 的殘影
-    mov ebx, g_ActiveVerb
-    mov g_D_VERB, ebx
     mov g_InputMode, INPUT_NONE
+    INVOKE SyncActiveToDisplay   ; 【一行搞定】消除輸入時的 35 殘影，恢復真實狀態
     jmp _Done
 
 _CheckV37:
     ; === 處理 V37E (準備切換 Program) ===
     cmp eax, 37
     jne _CheckV82
-    ; 這裡只更新真實狀態與畫面，然後把模式切換為等待 PROG
     mov g_ActiveVerb, 37
     mov g_InputMode, INPUT_PROG
-    mov g_D_PROG, EMPTY         ; 清空 PROG 畫面提示輸入
+    INVOKE SyncActiveToDisplay   ; 【一行搞定】同步真實狀態
+    mov g_D_PROG, EMPTY          ; 因為要輸入 PROG，所以特例把顯示清空提示使用者
     jmp _Done
 
 _CheckV82:
@@ -49,13 +46,10 @@ _CheckV82:
     cmp g_SystemState, SYS_PROG_11
     jne _Error
     
-    ; 真正改變系統狀態
     mov g_ActiveVerb, 16
     mov g_ActiveNoun, 44
-    ; 同步到畫面上
-    mov g_D_VERB, 16
-    mov g_D_NOUN, 44
     mov g_InputMode, INPUT_NONE
+    INVOKE SyncActiveToDisplay   ; 【一行搞定】同步真實狀態
     jmp _Done
 
 _HandleProgSubmit:
@@ -72,31 +66,20 @@ _HandleProgSubmit:
     mov g_ActiveProg, 1
     mov g_ActiveVerb, EMPTY
     mov g_ActiveNoun, EMPTY
-    
-    ; 同步到畫面顯示
-    mov g_D_PROG, 1
-    mov g_D_VERB, EMPTY
-    mov g_D_NOUN, EMPTY
-    mov g_D_R1, EMPTY
-    mov g_D_R2, EMPTY
-    mov g_D_R3, EMPTY
+    mov g_ActiveR1, EMPTY
+    mov g_ActiveR2, EMPTY
+    mov g_ActiveR3, EMPTY
     
     mov g_Prog01Timer, TIMER_PROG_01
     mov g_InputMode, INPUT_NONE
+    INVOKE SyncActiveToDisplay   ; 【一行搞定】同步真實狀態
     jmp _Done
 
 _Error:
     ; 亮起 OPR ERR 燈號
     or g_DskyState, MASK L_OPR_ERR
     mov g_InputMode, INPUT_NONE
-    
-    ; 【友善設計】如果輸入錯誤，把畫面上打錯的數字抹除，恢復成系統真實的狀態
-    mov eax, g_ActiveVerb
-    mov g_D_VERB, eax
-    mov eax, g_ActiveNoun
-    mov g_D_NOUN, eax
-    mov eax, g_ActiveProg
-    mov g_D_PROG, eax
+    INVOKE SyncActiveToDisplay   ; 【一行搞定】輸入錯誤，清除畫面的錯誤數字，直接恢復原本狀態
 
 _Done:
     ret

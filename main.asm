@@ -11,6 +11,9 @@ INCLUDE Globals.inc
     INCLUDE DSKY_UI.inc
 
     DescriptionString BYTE "AGC DSKY Simulator - Table Driven & Threading", 0
+
+    cursorInfo DWORD 100    ; dwSize (游標厚度 1~100)
+               DWORD 0      ; bVisible (0 = 隱藏, 1 = 顯示)
     
 .data?
     hThread     DWORD ?
@@ -21,10 +24,18 @@ pikachu:
     ; =========== 畫面初始化 ============
     INVOKE SetConsoleOutputCP, 65001            ; 設定輸出使用 UTF-8 編碼
 
+
+    ; ======= 隱藏控制台的閃爍游標 =======
+    INVOKE GetStdHandle, -11    ; 取得標準輸出 (STD_OUTPUT_HANDLE = -11) 的 Handle
+    INVOKE SetConsoleCursorInfo, eax, OFFSET cursorInfo
+    ; ==========================================
+
     mov edx, OFFSET dskyUI
     call WriteString
 
     INVOKE RenderDSKY
+
+    INVOKE InitInfoPanel
 
     mov dx, ((2 SHL 8) OR 60)
     call Gotoxy
@@ -52,6 +63,7 @@ pikachu:
 
     _MainLoop:
         INVOKE RenderDSKY
+        INVOKE RenderTimers
         call ReadKey
         jz ContinueLoop           ; 如果沒有按鍵輸入，繼續等待
 

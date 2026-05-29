@@ -20,4 +20,8 @@ greenText EQU ((black * 16) + lightGreen)
 
 RenderDSKY PROTO
 
+; 右側資訊面板 API
+InitInfoPanel PROTO
+RenderTimers PROTO
+
 ENDIF

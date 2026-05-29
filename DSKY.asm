@@ -32,6 +32,25 @@ INCLUDE Globals.inc
     s_D_R1     DWORD 88888
     s_D_R2     DWORD 88888
     s_D_R3     DWORD 88888
+
+    ; ==========================================
+    ; 右側資訊面板字串 (靜態)
+    ; ==========================================
+    str_ST      BYTE "ST  (Start Time) : ", 0
+    str_MET     BYTE "MET (Mission ET) : ", 0
+    
+    str_Keys1   BYTE "--- Key Mappings ---", 0
+    str_Keys2   BYTE "V / N  : Verb / Noun", 0
+    str_Keys3   BYTE "0 - 9  : Digits", 0
+    str_Keys4   BYTE "E      : Enter", 0
+    str_Keys5   BYTE "P      : PRO (Proceed)", 0
+    str_Keys6   BYTE "C      : CLR (Clear)", 0
+    str_Keys7   BYTE "K      : KEY REL (Release)", 0
+    str_Keys8   BYTE "R      : RSET (Reset ERR)", 0
+    str_Keys9   BYTE "Enter  : Start PROG 11", 0
+
+    ; 用來防止畫面閃爍的變數 (紀錄上一次渲染是哪一秒)
+    s_LastSecond DWORD 0FFFFFFFFh
 .code
 
 ; ==============================================================================
@@ -289,5 +308,143 @@ SyncActiveToDisplay PROC USES eax
     
     ret
 SyncActiveToDisplay ENDP
+
+; ==============================================================================
+; InitInfoPanel: 程式啟動時執行一次，繪製右側的靜態文字與操作說明
+; ==============================================================================
+InitInfoPanel PROC USES eax edx
+    mov eax, lightGray + (black SHL 4)
+    call SetTextColor
+    
+    ; 畫 ST 與 MET 標籤 (Y=4, 5)
+    mov dx, ((4 SHL 8) OR 62)   ; Y=4, X=62
+    call Gotoxy
+    mov edx, OFFSET str_ST
+    call WriteString
+
+    mov dx, ((5 SHL 8) OR 62)   ; Y=5, X=62
+    call Gotoxy
+    mov edx, OFFSET str_MET
+    call WriteString
+
+    ; 畫按鍵說明 (Y=8 開始)
+    mov dx, ((8 SHL 8) OR 62)
+    call Gotoxy
+    mov edx, OFFSET str_Keys1
+    call WriteString
+    mov dx, ((9 SHL 8) OR 62)
+    call Gotoxy
+    mov edx, OFFSET str_Keys2
+    call WriteString
+    mov dx, ((10 SHL 8) OR 62)
+    call Gotoxy
+    mov edx, OFFSET str_Keys3
+    call WriteString
+    mov dx, ((11 SHL 8) OR 62)
+    call Gotoxy
+    mov edx, OFFSET str_Keys4
+    call WriteString
+    mov dx, ((12 SHL 8) OR 62)
+    call Gotoxy
+    mov edx, OFFSET str_Keys5
+    call WriteString
+    mov dx, ((13 SHL 8) OR 62)
+    call Gotoxy
+    mov edx, OFFSET str_Keys6
+    call WriteString
+    mov dx, ((14 SHL 8) OR 62)
+    call Gotoxy
+    mov edx, OFFSET str_Keys7
+    call WriteString
+    mov dx, ((15 SHL 8) OR 62)
+    call Gotoxy
+    mov edx, OFFSET str_Keys8
+    call WriteString
+    mov dx, ((16 SHL 8) OR 62)
+    call Gotoxy
+    mov edx, OFFSET str_Keys9
+    call WriteString
+
+    ret
+InitInfoPanel ENDP
+
+; 輔助函數：印出數字，如果小於 10 會補 0 (例如 9 -> 09)
+WriteZeroPad PROC
+    cmp eax, 10
+    jae _SkipPad
+    push eax
+    mov al, '0'
+    call WriteChar
+    pop eax
+_SkipPad:
+    call WriteDec
+    ret
+WriteZeroPad ENDP
+
+; ==============================================================================
+; PrintTime: 將毫秒 (ms) 轉換為 HH:MM:SS 並印出
+; ==============================================================================
+PrintTime PROC USES eax ebx ecx edx, msTime:DWORD
+    mov eax, msTime
+    xor edx, edx
+    mov ebx, 1000
+    div ebx         ; EAX = 總秒數
+    
+    xor edx, edx
+    mov ebx, 3600
+    div ebx         ; EAX = 小時, EDX = 剩餘秒數
+    mov ecx, edx    ; 暫存剩餘秒數到 ECX
+    
+    call WriteZeroPad
+    mov al, ':'
+    call WriteChar
+    
+    mov eax, ecx
+    xor edx, edx
+    mov ebx, 60
+    div ebx         ; EAX = 分鐘, EDX = 秒
+    mov ecx, edx    ; 暫存秒數到 ECX
+    
+    call WriteZeroPad
+    mov al, ':'
+    call WriteChar
+    
+    mov eax, ecx
+    call WriteZeroPad
+    
+    ret
+PrintTime ENDP
+
+; ==============================================================================
+; RenderTimers: 放在主迴圈中，每秒更新右側的 HH:MM:SS
+; ==============================================================================
+RenderTimers PROC USES eax ebx edx
+    ; 取出目前經過的秒數 (UptimeMs / 1000)
+    mov eax, g_UptimeMs
+    xor edx, edx
+    mov ebx, 1000
+    div ebx
+    
+    ; 【防閃爍機制】如果秒數沒變，就不重新畫畫面
+    cmp eax, s_LastSecond
+    je _Done
+    mov s_LastSecond, eax
+
+    mov eax, greenText
+    call SetTextColor
+
+    ; 印出 ST 時間
+    mov dx, ((4 SHL 8) OR 81)   ; Y=4, X=81 (接在標籤後面)
+    call Gotoxy
+    INVOKE PrintTime, g_UptimeMs
+
+    ; 印出 MET 時間
+    mov dx, ((5 SHL 8) OR 81)   ; Y=5, X=81
+    call Gotoxy
+    INVOKE PrintTime, g_METMs
+
+_Done:
+    ret
+RenderTimers ENDP
 
 END

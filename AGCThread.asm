@@ -32,6 +32,8 @@ _AGCLoop:
     add g_UptimeMs, 50            ; 每次迴圈穩定增加 50ms
     
     ; 只有在 PROG 11 之後才計算 MET
+    cmp g_ActiveProg, EMPTY
+    je _CalcBlink
     cmp g_ActiveProg, 11
     jl _CalcBlink
     add g_METMs, 50

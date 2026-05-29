@@ -7,12 +7,22 @@ INCLUDE WinAPIs.inc
 INCLUDE Globals.inc
 
 .data
-    s_BlinkCycle DWORD 0      ; 用於追蹤閃爍週期的計數器
+    s_BlinkCycle    DWORD 0      ; 用於追蹤閃爍週期的計數器
     
     ; 燈泡測試時用來暫存原本狀態的變數
     s_SaveDskyState DWORD 0
+    qwDueTime       QWORD 0
+
+.data?
+    hTimer          DWORD ?
+
 .code
 AGCThread PROC lpParam:DWORD
+
+    INVOKE CreateWaitableTimer, NULL, FALSE, NULL
+    mov hTimer, eax
+    INVOKE SetWaitableTimer, hTimer, OFFSET qwDueTime, 50, NULL, NULL, FALSE
+
 _AGCLoop:
     ; ----------------------------------------------------
     ; 1. 處理 V35E 燈泡測試 (Lamp Test)
@@ -108,7 +118,8 @@ _TurnOffComp:
 
 _ThreadSleep:
     ; 執行緒睡眠 50 毫秒，避免佔用 100% CPU
-    INVOKE Sleep, 50
+    ; INVOKE Sleep, 50
+    INVOKE WaitForSingleObject, hThread, INFINITE
     jmp _AGCLoop
 
     ret

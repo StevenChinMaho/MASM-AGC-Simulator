@@ -27,16 +27,16 @@ _HandleVerbSubmit:
 _CheckV37:
     cmp eax, 37             ; V37E 準備切換 Program
     jne _CheckV82
-    mov g_ActiveVerb, 37
     mov g_InputMode, INPUT_PROG
     INVOKE SyncActiveToDisplay  
-    mov g_D_PROG, EMPTY         ; 特例：清空 PROG 畫面提示等待輸入
+    mov g_D_VERB, 37            ; 特例：更新螢幕後刻意保留 VERB 37  
+    mov g_D_PROG, EMPTY         ; 清空 PROG 畫面提示等待輸入
     jmp _Done
 
 _CheckV82:
     cmp eax, 82             ; V82E 軌道參數
     jne _Error
-    ; 直接檢查 ActiveProg 而非
+    ; 直接檢查 ActiveProg
     cmp g_ActiveProg, 11
     jne _Error
     

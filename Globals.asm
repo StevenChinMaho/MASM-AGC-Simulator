@@ -1,0 +1,23 @@
+INCLUDE Irvine32.inc
+option casemap:none
+INCLUDE Globals.inc
+
+.data
+    ; --- 系統與輸入狀態 ---
+    g_SystemState   DWORD SYS_INIT
+    g_InputMode     DWORD INPUT_NONE
+    g_InputBuffer   DWORD 0
+    
+    ; --- 計時器 ---
+    g_LampTestTimer DWORD 0
+    g_Prog01Timer   DWORD 0
+
+    ; --- DSKY 顯示變數 (預設初始狀態) ---
+    g_D_PROG DWORD EMPTY
+    g_D_VERB DWORD EMPTY
+    g_D_NOUN DWORD EMPTY
+    g_D_R1   DWORD 0
+    g_D_R2   DWORD 0
+    g_D_R3   DWORD 0
+
+END

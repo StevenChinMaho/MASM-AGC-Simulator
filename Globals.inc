@@ -15,13 +15,29 @@ INPUT_VERB  EQU 1
 INPUT_NOUN  EQU 2
 INPUT_PROG  EQU 3
 
-; --- 全域變數宣告 ---
-EXTERNDEF g_SystemState:DWORD     ; 紀錄目前是 INIT, PROG 01, 02, 11
-EXTERNDEF g_InputMode:DWORD       ; 目前正在輸入什麼 (Verb, Noun, Prog)
-EXTERNDEF g_InputBuffer:DWORD     ; 使用者輸入的數字暫存
+; --- 時間與動畫常數 (毫秒) ---
+TIMER_LAMP_TEST EQU 5000
+TIMER_PROG_01   EQU 5000
+BLINK_P02_OFF   EQU 400
+BLINK_P02_ON    EQU 500   ; 400 + 100
+BLINK_P11_OFF   EQU 1500
+BLINK_P11_ON    EQU 2000  ; 1500 + 500
 
-EXTERNDEF g_LampTestTimer:DWORD   ; V35E 燈泡測試計時器
-EXTERNDEF g_Prog01Timer:DWORD     ; PROG 01 轉 PROG 02 的 5 秒計時器
+; --- 全域變數宣告 (統一由此管理) ---
+EXTERNDEF g_SystemState:DWORD     
+EXTERNDEF g_InputMode:DWORD       
+EXTERNDEF g_InputBuffer:DWORD     
+
+EXTERNDEF g_LampTestTimer:DWORD   
+EXTERNDEF g_Prog01Timer:DWORD     
+
+; 【新增】從 DSKY.inc 搬過來的顯示變數宣告
+EXTERNDEF g_D_PROG:DWORD
+EXTERNDEF g_D_VERB:DWORD
+EXTERNDEF g_D_NOUN:DWORD
+EXTERNDEF g_D_R1:DWORD
+EXTERNDEF g_D_R2:DWORD
+EXTERNDEF g_D_R3:DWORD
 
 ; 跨檔案的副程式宣告
 ProcessKey PROTO, key:BYTE

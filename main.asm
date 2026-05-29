@@ -12,12 +12,6 @@ INCLUDE Globals.inc
 
     DescriptionString BYTE "AGC DSKY Simulator - Table Driven & Threading", 0
     
-    g_SystemState   DWORD SYS_INIT
-    g_InputMode     DWORD INPUT_NONE
-    g_InputBuffer   DWORD 0
-    g_LampTestTimer DWORD 0
-    g_Prog01Timer   DWORD 0
-    
 .data?
     hThread     DWORD ?
 
@@ -53,13 +47,6 @@ pikachu:
     INVOKE CreateThread, NULL, 0, OFFSET AGCThread, NULL, 0, NULL
     mov hThread, eax
     ; =========================================================
-
-    mov g_D_PROG, EMPTY
-    mov g_D_VERB, EMPTY
-    mov g_D_NOUN, EMPTY
-    mov g_D_R1, 0
-    mov g_D_R2, 0
-    mov g_D_R3, 0
 
     mov g_DskyState, 1 SHL L_PROG
 

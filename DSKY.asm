@@ -3,6 +3,7 @@ INCLUDE Irvine32.inc
 option casemap:none
 
 INCLUDE DSKY.inc
+INCLUDE Globals.inc
 
 .data
 
@@ -26,18 +27,12 @@ INCLUDE DSKY.inc
     g_DskyState DskyStateRecord <0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>
     s_DskyCurrentState DskyStateRecord <>
 
-    g_D_PROG   DWORD EMPTY
-    g_D_VERB   DWORD EMPTY
-    g_D_NOUN   DWORD EMPTY
-    g_D_R1     DWORD EMPTY
-    g_D_R2     DWORD EMPTY
-    g_D_R3     DWORD EMPTY
-    s_D_PROG   DWORD EMPTY
-    s_D_VERB   DWORD EMPTY
-    s_D_NOUN   DWORD EMPTY
-    s_D_R1     DWORD EMPTY
-    s_D_R2     DWORD EMPTY
-    s_D_R3     DWORD EMPTY
+    s_D_PROG   DWORD 88
+    s_D_VERB   DWORD 88
+    s_D_NOUN   DWORD 88
+    s_D_R1     DWORD 88888
+    s_D_R2     DWORD 88888
+    s_D_R3     DWORD 88888
 .code
 
 ; ==============================================================================

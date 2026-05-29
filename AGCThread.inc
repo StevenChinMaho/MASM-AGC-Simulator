@@ -1,3 +1,3 @@
 AGCThread PROTO, lpParam:DWORD
 
-EXTERNDEF WaitEvents:DWORD
+; EXTERNDEF WaitEvents:DWORD

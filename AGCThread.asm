@@ -28,7 +28,7 @@ _AGCLoop:
     je _ProcessProgTimer
     
     ; 如果計時器剛好被設為 5000，代表剛觸發，需備份原本狀態
-    cmp g_LampTestTimer, 5000
+    cmp g_LampTestTimer, TIMER_LAMP_TEST
     jne _LampTestActive
     mov eax, g_DskyState
     mov s_SaveDskyState, eax
@@ -116,21 +116,21 @@ _ProcessBlinking:
 
 _BlinkProg02:
     ; PROG 02: 400ms off, 100ms on (總週期 500ms)
-    cmp s_BlinkCycle, 500
+    cmp s_BlinkCycle, BLINK_P02_ON
     jl _Prog02CheckOn
     mov s_BlinkCycle, 0    ; 重置週期
 _Prog02CheckOn:
-    cmp s_BlinkCycle, 400
+    cmp s_BlinkCycle, BLINK_P02_OFF
     jl _TurnOffComp
     jmp _TurnOnComp
 
 _BlinkProg11:
     ; PROG 11: 1500ms off, 500ms on (總週期 2000ms)
-    cmp s_BlinkCycle, 2000
+    cmp s_BlinkCycle, BLINK_P11_ON
     jl _Prog11CheckOn
     mov s_BlinkCycle, 0    ; 重置週期
 _Prog11CheckOn:
-    cmp s_BlinkCycle, 1500
+    cmp s_BlinkCycle, BLINK_P11_OFF
     jl _TurnOffComp
     jmp _TurnOnComp
 

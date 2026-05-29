@@ -78,6 +78,52 @@ _Done:
     ret
 HandleEnter ENDP
 
+; =======================================================
+; HandleKeyRel: 處理按下 KEY REL (K) 鍵
+; 放棄手動輸入控制權，關閉提示燈，並將畫面強制恢復為背景狀態
+; =======================================================
+HandleKeyRel PROC
+    ; 1. 無論如何，先關閉 KEY REL 的燈號與閃爍狀態
+    and g_DskyState, NOT MASK L_KEY_REL
+
+    ; 2. 檢查是否正在輸入中，如果不是，就什麼都不做
+    cmp g_InputMode, INPUT_NONE
+    je _Done
+    
+    ; 3. 取消正在進行的輸入，並將畫面洗回系統真實狀態 (Model)
+    mov g_InputMode, INPUT_NONE
+    INVOKE SyncActiveToDisplay
+_Done:
+    ret
+HandleKeyRel ENDP
+
+; =======================================================
+; HandleClr: 處理按下 CLR (C) 鍵
+; 只清除畫面上「目前正在編輯的欄位」，讓使用者可以重新打數字
+; =======================================================
+HandleClr PROC
+    ; 根據目前的輸入模式，清空對應的顯示欄位 (View)
+    cmp g_InputMode, INPUT_VERB
+    je _ClrVerb
+    cmp g_InputMode, INPUT_NOUN
+    je _ClrNoun
+    cmp g_InputMode, INPUT_PROG
+    je _ClrProg
+    jmp _Done
+
+_ClrVerb:
+    mov g_D_VERB, EMPTY
+    jmp _Done
+_ClrNoun:
+    mov g_D_NOUN, EMPTY
+    jmp _Done
+_ClrProg:
+    mov g_D_PROG, EMPTY
+    jmp _Done
+
+_Done:
+    ret
+HandleClr ENDP
 
 ; =======================================================
 ; 2. HandlePro: 處理按下 PRO 鍵的狀態切換

@@ -80,5 +80,7 @@ HandleEnter PROTO
 HandlePro PROTO
 HandleReturn PROTO
 HandleTimerProg01 PROTO
+HandleKeyRel PROTO
+HandleClr PROTO
 
 ENDIF

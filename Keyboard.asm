@@ -61,6 +61,10 @@ _CheckSpecialKeys:
     je _HandlePro
     cmp al, 'R'
     je _HandleReset
+    cmp al, 'K'          ; 【新增】KEY REL 鍵
+    je _HandleKeyRel
+    cmp al, 'C'          ; 【新增】CLR 鍵
+    je _HandleClr
     cmp al, VK_RETURN   
     je _HandleReturn
     jmp _Done
@@ -89,6 +93,16 @@ _HandleReset:
     mov g_InputMode, INPUT_NONE
     mov g_InputBuffer, 0
     INVOKE SyncActiveToDisplay  ; 直接同步，消除畫面上打錯的數字
+    jmp _Done
+
+_HandleKeyRel:
+    INVOKE HandleKeyRel         ; 呼叫狀態控制器
+    mov g_InputBuffer, 0        ; 清空剛打到一半的數字緩衝
+    jmp _Done
+
+_HandleClr:
+    INVOKE HandleClr            ; 呼叫狀態控制器
+    mov g_InputBuffer, 0        ; 清空剛打到一半的數字緩衝
     jmp _Done
 
 _HandlePro:

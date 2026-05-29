@@ -219,8 +219,6 @@ HandleReturn PROC
     mov g_ActiveProg, 11
     mov g_ActiveVerb, 6
     mov g_ActiveNoun, 62
-    mov g_ActiveR1, 12345       
-    mov g_ActiveR2, 54321       
     INVOKE SyncActiveToDisplay
 _Done:
     ret

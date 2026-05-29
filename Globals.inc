@@ -73,6 +73,11 @@ EXTERNDEF g_DskyFlashState:DskyStateRecord  ; 閃爍遮罩 (對應 g_DskyState �
 EXTERNDEF g_FlashVerb:DWORD
 EXTERNDEF g_FlashNoun:DWORD
 
+EXTERNDEF OrbitTableN62:DWORD
+EXTERNDEF OrbitTableN62MaxIndex:DWORD
+EXTERNDEF OrbitTableN44:DWORD
+EXTERNDEF OrbitTableN44MaxIndex:DWORD
+
 ; 跨檔案的副程式宣告
 ProcessKey PROTO, key:BYTE
 ExecuteCommand PROTO

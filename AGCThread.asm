@@ -14,6 +14,9 @@ INCLUDE Globals.inc
     s_SaveFlashVerb DWORD 0
     s_SaveFlashNoun DWORD 0
     s_NextUpdateMs  DWORD 0
+    s_LastOrbitIdx  DWORD 0FFFFFFFFh
+    s_LastOrbitNoun DWORD 0
+
     qwDueTime       QWORD 0
 
 .data?
@@ -60,6 +63,84 @@ _SetDark:
     mov g_MasterBlink, 0
     
 _BlinkDone:
+
+    ; ====================================================
+    ; 處理 V06N62 與 V16N44 的雙重 MET 軌道資料查表
+    ; ====================================================
+_CheckV06N62:
+    cmp g_ActiveVerb, 6
+    jne _CheckV16N44
+    cmp g_ActiveNoun, 62
+    jne _CheckV16N44
+    
+    ; 準備 V06N62 的查表指標與長度
+    mov esi, OFFSET OrbitTableN62
+    mov edi, OrbitTableN62MaxIndex
+    
+    ; 檢查是否剛切換到 62，若是則解除 Index 鎖定
+    cmp s_LastOrbitNoun, 62
+    je _CalcOrbitIndex
+    mov s_LastOrbitNoun, 62
+    mov s_LastOrbitIdx, 0FFFFFFFFh
+    jmp _CalcOrbitIndex
+
+_CheckV16N44:
+    cmp g_ActiveVerb, 16
+    jne _ResetAndSkipOrbit
+    cmp g_ActiveNoun, 44
+    jne _ResetAndSkipOrbit
+    
+    ; 準備 V16N44 的查表指標與長度
+    mov esi, OFFSET OrbitTableN44
+    mov edi, OrbitTableN44MaxIndex
+    
+    ; 檢查是否剛切換到 44，若是則解除 Index 鎖定
+    cmp s_LastOrbitNoun, 44
+    je _CalcOrbitIndex
+    mov s_LastOrbitNoun, 44
+    mov s_LastOrbitIdx, 0FFFFFFFFh
+
+_CalcOrbitIndex:
+    ; 計算目前的 Index: METMs / 2000
+    mov eax, g_METMs
+    xor edx, edx
+    mov ebx, 2000
+    div ebx
+    mov ecx, eax    ; ECX = Index
+
+    ; 防呆機制：不能超過目前使用表格的 MaxIndex (edi)
+    cmp ecx, edi
+    jbe _IndexOK
+    mov ecx, edi
+_IndexOK:
+
+    ; 檢查這個 Index 是否已經更新過了
+    cmp ecx, s_LastOrbitIdx
+    je _SkipOrbitUpdate
+    mov s_LastOrbitIdx, ecx
+
+    ; 記憶體偏移量 (Offset) = Index * 12
+    mov eax, 12
+    mul ecx                     ; EAX = 總偏移 Byte 數
+    add esi, eax                ; ESI 指向這筆資料的開頭位址 (ESI 在上面已經準備好了)
+
+    ; 從記憶體讀取 R1, R2, R3
+    mov eax, [esi]
+    mov g_ActiveR1, eax
+    mov eax, [esi+4]
+    mov g_ActiveR2, eax
+    mov eax, [esi+8]
+    mov g_ActiveR3, eax
+
+    INVOKE SyncActiveToDisplay
+    jmp _SkipOrbitUpdate
+
+_ResetAndSkipOrbit:
+    ; 不在這兩個狀態時，清除鎖定紀錄
+    mov s_LastOrbitIdx, 0FFFFFFFFh
+    mov s_LastOrbitNoun, 0
+
+_SkipOrbitUpdate:
 
     ; ====================================================
     ; 處理 V16N65 ST 時間更新 (每1秒更新，並鎖定進入時的百分秒)

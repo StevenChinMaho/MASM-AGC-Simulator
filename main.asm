@@ -43,7 +43,7 @@ pikachu:
     call WriteString
     ; =================================
 
-    call ReadChar       ; 等待使用者按下任意鍵後開始模擬 
+    ; call ReadChar       ; 等待使用者按下任意鍵後開始模擬 
 
     ; ========== 建立計時器與事件，並啟動模擬執行緒 ==========
     ; INVOKE CreateWaitableTimer, NULL, FALSE, NULL

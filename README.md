@@ -1,51 +1,76 @@
 # MASM AGC Simulator
 
-> 此專案仍在初期開發階段，絕大多數預期的 feature 都還沒有實做出來。
-
 ## 簡介
 
-此專案是一個 MASM 期末專題，旨在使用 32-bit MASM 搭配 Irvine32 學習套件與 Windows API 來實現部分大幅簡化的 Apollo Guidance Computer (AGC) 發射倒入軌階段時的部分軌道計算行為及 DSKY 部分簡單操作邏輯。
+此專案是一個 MASM 期末專題，旨在使用 32-bit MASM 結合 Irvine32 學習套件與 Windows API 來實現簡化版 Apollo Guidance Computer (AGC) 發射與入軌階段部分軌道計算行為及 DSKY 動名詞指令系統。
 
 ## 緣起
 
-此專案的目的為 MASM 練習，而非真正意義上的重構。儘管此專案的靈感來源於 NASA 開源的 AGC 程式碼，但 AGC 只有 16bit (15 data bits + 1 parity bit)，並且使用一補數來運算，原始碼對我來說太龐大也太難理解，並且跟課程所學習的 MASM 根本不是同種東西。因此我主要的開發手段是參考[Moonjs](https://www.svtsim.com/moonjs/agc.html)網站的AGC模擬器，試著使用自己的理解來模仿重現小部分的特性。
+此專案的目的為 MASM 練習，儘管此專案的靈感來源於 NASA 開源的 AGC 程式碼，但 AGC 只有 16bit (15 data bits + 1 parity bit)，並且使用一補數來運算，原始碼對我來說過於龐大，並且跟課程所學習的 MASM 相差甚遠。因此我主要的開發手段是參考[Moonjs](https://www.svtsim.com/moonjs/agc.html)網站的AGC模擬器，試著使用自己的理解來模擬小部分的特性的重現。
 
-## 專案特性
+## 專案特色
 
-使用 32bit MASM 實現軌道運算公式與輸出成果處理，並且能大致模仿輸入動名詞切換想監控的軌道參數模式。火箭當前的姿態與加速度向量等運算軌道所需要的資訊就用預先制好的表來查詢，目前預計希望能實現以下三種模式:
+使用 32bit MASM 實現 AGC 操作與輸出處理，結合 Windows API 達成穩時鐘訊號與非同步計算，並且能模擬輸入動名詞切換不同軌道參數模式監控。火箭當前的速度與軌道資訊使用預先制好的表來查詢。
 
-1. major mode 11 display
+### 鍵盤 DSKY 映射表
 
-    R1 = velocity (XXXXX ft/s).
+| 電腦鍵盤 | 對應 DSKY 按鍵 | 作用 |
+| ------- | ------------- | ---- |
+| `V / N` | Verb / Noun | 進入 VERB/NOUN 輸入模式，KEY REL 指示燈會亮起 |
+| `0 - 9` | Digits | 輸入數字 |
+| `E` | Enter | 完成輸入 |
+| `P` | PRO (Proceed) | 返回主監控介面 |
+| `C` | CLR (Clear) | 清除輸入緩衝區 |
+| `K` | KEY REL (Release) | 取消輸入模式 |
+| `R` | RSET (Reset ERR) | 重置 OPR ERR (指令錯誤) 指示燈 |
+| `Enter` | Start PROG 11 (發射) | 火箭點火發射，AGC 自動進入 PROG 11 |
 
-    R2 = the altitude rate (XXXXX ft/s).
+介面右側兩行時鐘分別代表 "開始時間 (Start Time)" 與 "任務經過時間 (Mission Elapsed Time)。
 
-    R3 = the altitude above the pad (XXXX.X nmi).
+### 發射檢查表
 
-2. orbit parameters (V82E)
+1. 輸入指令 `V37E01E` 進入 PROG 01 (發射前初始化)。
 
-    R1 = the apocenter altitude (XXXX.X nmi).
+2. 初始化慣性測量單元 (IMU)，等待 5 秒左右，確認 NO ATT 指示燈關閉。
+
+3. 初始化結束後，AGC 會自動切換至 PROG 02 (等待發射階段)。
+
+4. 在 PROG 02 中按下 ENTER (電腦鍵盤，不是 DSKY) 即可發射，並自動切換至 PROG 11。
+
+5. 在 PROG 11 發射階段預設顯示以下監控資訊 (VERB 06, NOUN 62):
+
+    R1 = 速率 (XXXXX ft/s).
+
+    R2 = 上升率 (XXXXX ft/s).
+
+    R3 = 高度 (XXXX.X nmi).
+
+6. 在 PROG 11 發射階段可以輸入指令 `V82E` 監控軌道參數 (NOUN 44)
+
+    R1 = 遠地點高度 (apogee) (XXXX.X nmi).
 
     R2 = the pericenter altitude (XXXX.X nmi).
 
     R3 = the time to free fall (XX XX min:sec).
 
-3. display time from perigee (V06N32E)
+7. 輸入指令 `V16N65E` 監控 AGC 開機時間
 
-    R1 = 00XXX. hours
+    R1 = 00XXX. 小時
 
-    R2 = 000XX. minutes
+    R2 = 000XX. 分鐘
 
-    R3 = 0XX.XX seconds
+    R3 = 0XX.XX 秒數
 
-也就是說，大部分的指示燈都沒有實際用途。
+按下 `PRO` 鍵可以返回 VERB 06 NOUN 62 主監控。
 
-## Prerequisites
+另外，輸入指令 `V35E` 可運行燈泡測試
+
+## 安裝步驟 (使用VScode開發)
+
+### Prerequisites
 
 1. Visual Studio
 2. 安裝 `使用 C++ 的桌面開發 (Desktop development with C++)` 工作負載
-
-## 安裝步驟 (使用VScode開發)
 
 ### 一、下載並安裝 Irvine 套件
 
@@ -68,6 +93,19 @@ C:\
 
 於 Windows 工作列搜尋 `x86 Native Tools Command Prompt for VS` 並執行，並在該黑畫面中輸入 `code .`，按下 Enter 後就會開啟 VScode，此 VScode 就會套用編譯 MASM 所需的環境變數。
 
+開啟 VScode 後可以透過在終端機輸入指令 `ml` 測試環境變數:
+
+```pwsh
+PS C:\MASM-AGC-Simulator> ml
+Microsoft (R) Macro Assembler Version 14.51.36244.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+usage: ML [ options ] filelist [ /link linkoptions]
+Run "ML /help" or "ML /?" for more info
+```
+
+若有成功回傳此訊息，表示環境變數有成功加入，即可進入下一步驟。
+
 > 注意: 要編譯並執行此專案必須每次都使用此方式開啟 VScode。
 
 ### 三、編譯並執行
@@ -87,6 +125,11 @@ C:\
 ### 無法使用中斷點
 
 **解決方法**: 按下 `Ctrl`+`,` (或點擊左下齒輪並點 `Settings`)，搜尋 `allowBreakpointsEverywhere` 並打勾，即可使用中斷點。
+
+## 已知未修復問題
+
+- 燈泡檢查模式下，數字顯示器會被資料更新覆蓋。
+- 在非 PROG 11 中下進入開機時間監控模式會導致 VERB 與 NOUN 被不當修改。
 
 ## 參考資料
 

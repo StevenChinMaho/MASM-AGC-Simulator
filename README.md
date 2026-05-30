@@ -114,6 +114,10 @@ Run "ML /help" or "ML /?" for more info
 
 預設的 VScode 設定下可能會無法使用 `.asm` 中斷點的功能，按下 `Ctrl`+`,` (或點擊左下齒輪並點 `Settings`)，搜尋 `allowBreakpointsEverywhere` 並打勾，即可使用中斷點。
 
+## 附屬發射彈道計算工具
+
+由於此專案的彈道是靠查表來顯示，因此我做了一個 Python 腳本專門做這件事。可以調整發動機推力與 gravity turn 俯仰計算發射彈道，需要 `matplotlib` 套件。調整好想要的彈道後，可以按下 `Export ASM Table` 按鈕匯出資料表 `.asm`，重新編譯程式後即可套用。
+
 ## 常見問題
 
 ### 程式碼無法編譯，找不到 `ml.exe`

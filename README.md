@@ -47,11 +47,11 @@
 
 6. 在 PROG 11 發射階段可以輸入指令 `V82E` 監控軌道參數 (NOUN 44)
 
-    R1 = 遠地點高度 (apogee) (XXXX.X nmi).
+    R1 = 遠地點高度 (Apogee) (XXXX.X nmi).
 
-    R2 = the pericenter altitude (XXXX.X nmi).
+    R2 = 近地點高度 (Perigee) (XXXX.X nmi).
 
-    R3 = the time to free fall (XX XX min:sec).
+    R3 = 自由落體時間 (XX XX min:sec).
 
 7. 輸入指令 `V16N65E` 監控 AGC 開機時間
 

@@ -285,9 +285,19 @@ RenderDSKY ENDP
 
 ; ==============================================================================
 ; SyncActiveToDisplay
-; 功能: 將系統真實狀態 (Model) 強制覆寫到顯示變數 (View) 上
+; 功能: 當系統處於 INPUT_NONE 和非燈泡測試狀態，則將真實狀態 (Model) 覆寫到顯示變數 (View) 上
 ; ==============================================================================
 SyncActiveToDisplay PROC USES eax
+    ; 1. 若處於燈泡測試期間 (Lamp Test)，保護 88888 畫面，直接跳出
+    cmp g_LampTestTimer, 0
+    ja _Done
+
+    ; 2. 只要不是 INPUT_NONE (代表正在輸入 PROG, VERB 或 NOUN)
+    ; 就直接跳出，徹底凍結全畫面的背景更新
+    cmp g_InputMode, INPUT_NONE
+    jne _Done
+    
+    ; 3. 只有在閒置 (INPUT_NONE) 時，才允許背景最新資料覆寫到畫面上
     mov eax, g_ActiveProg
     mov g_D_PROG, eax
     
@@ -306,6 +316,7 @@ SyncActiveToDisplay PROC USES eax
     mov eax, g_ActiveR3
     mov g_D_R3, eax
     
+_Done:
     ret
 SyncActiveToDisplay ENDP
 
